@@ -1,0 +1,374 @@
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import * as jsonc from 'jsonc-parser';
+import type { Config, ModelConfig, UIConfig } from '../types/index.js';
+import type { LegacyConfig } from '../types/legacyConfig.js';
+import { KeybindingManager, parseKeybindings } from '../core/keybindings.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const DEFAULT_CONFIG: Config = {
+  default_model: 'lmstudio-local',
+  suggest_model: 'lmstudio-local',
+  models: [
+    {
+      name: 'lmstudio-local',
+      provider: 'lmstudio',
+      baseURL: 'http://127.0.0.1:1234/v1',
+      model: 'qwen3-vl-4b-instruct',
+      apiKey: '',
+      temperature: 0.7,
+      maxTokens: 2000,
+      last_update_datetime: null,
+      speed: null,
+    },
+  ],
+  ui: {
+    banner: {
+      enabled: true,
+      style: 'particle',
+    },
+    statusBar: {
+      enabled: true,
+      showTokens: true,
+      showTime: true,
+      showWorkspace: true,
+      updateInterval: 1000,
+    },
+    theme: 'tech-blue',
+  },
+  workspace: process.cwd(),
+  dangerous_cmd: true,  // 默认开启危险命令确认
+  maxIterations: 15,    // 工具调用最大迭代次数
+  multi_model_routing: false,
+  model_routing: {
+    format: undefined,
+    writing: undefined,
+    code: undefined,
+    reasoning: undefined,
+  },
+};
+
+export class ConfigManager {
+  private configDir: string;
+  private settingsPath: string;
+  private legacyConfigPath: string;
+  private config: Config | null = null;
+
+  constructor() {
+    this.configDir = path.join(os.homedir(), '.alice');
+    this.settingsPath = path.join(this.configDir, 'settings.jsonc');
+    this.legacyConfigPath = path.join(this.configDir, 'config.json');
+  }
+
+  async init(customConfigPath?: string): Promise<void> {
+    // 如果指定了自定义配置路径，使用该路径
+    if (customConfigPath) {
+      this.settingsPath = customConfigPath;
+      // 自定义路径时，直接加载（不进行迁移检查）
+      await this.load();
+      return;
+    }
+
+    await fs.mkdir(this.configDir, { recursive: true });
+    
+    // 检查是否需要从旧配置迁移
+    const hasLegacy = await this.fileExists(this.legacyConfigPath);
+    const hasNew = await this.fileExists(this.settingsPath);
+    
+    if (hasLegacy && !hasNew) {
+      await this.migrateLegacyConfig();
+    } else if (!hasNew) {
+      await this.save(DEFAULT_CONFIG);
+    }
+    
+    await this.load();
+  }
+
+  async load(): Promise<Config> {
+    try {
+      const data = await fs.readFile(this.settingsPath, 'utf-8');
+      const parsed = jsonc.parse(data) as Record<string, unknown> & Config;
+      const cronTaskModel = parsed['cron-task-model'] ?? parsed.cron_task_model;
+      const config: Config = {
+        ...parsed,
+        cron_task_model: typeof cronTaskModel === 'string' ? cronTaskModel : undefined,
+      };
+
+      // 解析环境变量
+      this.resolveEnvVars(config);
+
+      this.config = config;
+      return this.config;
+    } catch (error) {
+      this.config = DEFAULT_CONFIG;
+      return this.config;
+    }
+  }
+
+  async save(config: Config): Promise<void> {
+    // 构建带注释的 JSONC 内容
+    const content = this.buildJsoncContent(config);
+    await fs.writeFile(this.settingsPath, content, 'utf-8');
+    this.config = config;
+  }
+
+  get(): Config {
+    return this.config || DEFAULT_CONFIG;
+  }
+
+  async update(updates: Partial<Config>): Promise<void> {
+    const current = this.get();
+    const updated = { ...current, ...updates };
+    await this.save(updated);
+  }
+
+  async updateModelSpeed(modelName: string, speed: number): Promise<void> {
+    const config = this.get();
+    const model = config.models.find(m => m.name === modelName);
+    
+    if (model) {
+      model.speed = speed;
+      model.last_update_datetime = new Date().toISOString();
+      await this.save(config);
+    }
+  }
+
+  async updateSuggestModel(modelName: string): Promise<void> {
+    const config = this.get();
+    config.suggest_model = modelName;
+    await this.save(config);
+  }
+
+  async setDefaultModel(modelName: string): Promise<void> {
+    const config = this.get();
+    config.default_model = modelName;
+    await this.save(config);
+  }
+
+  getModel(modelName: string): ModelConfig | undefined {
+    return this.config?.models.find(m => m.name === modelName);
+  }
+
+  getDefaultModel(): ModelConfig | undefined {
+    const config = this.get();
+    const byName = this.getModel(config.default_model);
+    if (byName) return byName;
+    // default_model 与任意 models[].name 不匹配时（例如误填成 "provider/model"），回退到第一个模型
+    if (config.models?.length) return config.models[0];
+    return undefined;
+  }
+
+  getSuggestModel(): ModelConfig | undefined {
+    return this.getModel(this.get().suggest_model);
+  }
+
+  /**
+   * 定时/心跳任务默认模型（实施方案阶段 3.3）；未配置或不存在于 models 时返回 undefined，调用方用 default_model
+   */
+  getCronTaskModel(): ModelConfig | undefined {
+    const name = this.get().cron_task_model?.trim();
+    if (!name) return undefined;
+    return this.getModel(name);
+  }
+
+  getKeybindingManager(): KeybindingManager {
+    const config = this.get();
+    if (config.keybindings) {
+      const customBindings = parseKeybindings(config.keybindings);
+      return new KeybindingManager(customBindings);
+    }
+    return new KeybindingManager();
+  }
+
+  /**
+   * 获取工具调用最大迭代次数（5-20，超出范围默认15）
+   */
+  getMaxIterations(): number {
+    const config = this.get();
+    const val = config.maxIterations;
+    if (val === undefined || val === null) return 15;
+    if (val < 5 || val > 20) return 15;
+    return val;
+  }
+
+  getConfigDir(): string {
+    return this.configDir;
+  }
+
+  async loadSystemPrompt(mode: 'office' | 'coder' = 'office'): Promise<string> {
+    const filename = mode === 'coder' ? 'coder_prompt.md' : 'system_prompt.md';
+
+    // 优先从用户配置目录加载（~/.alice/agents/），支持用户自定义覆盖
+    const userPromptPath = path.join(this.configDir, 'agents', filename);
+    try {
+      return await fs.readFile(userPromptPath, 'utf-8');
+    } catch {
+      // 用户目录不存在，fallback 到项目内的 agents/
+    }
+
+    // Fallback：从项目根目录加载（开发环境 / 打包后 dist/ 的上两级）
+    try {
+      const projectRoot = path.join(__dirname, '..', '..');
+      const projectPromptPath = path.join(projectRoot, 'agents', filename);
+      return await fs.readFile(projectPromptPath, 'utf-8');
+    } catch {
+      // 两个路径都失败
+    }
+
+    return 'You are ALICE, an AI office assistant.';
+  }
+
+  private resolveEnvVars(config: Config): void {
+    // 解析所有模型配置中的环境变量
+    for (const model of config.models) {
+      if (model.apiKey) {
+        model.apiKey = this.resolveEnvVar(model.apiKey);
+      }
+    }
+  }
+
+  private resolveEnvVar(value: string): string {
+    const envVarPattern = /\$\{([A-Z_][A-Z0-9_]*)\}/g;
+    return value.replace(envVarPattern, (_, varName) => {
+      return process.env[varName] || '';
+    });
+  }
+
+  private buildJsoncContent(config: Config): string {
+    const lines: string[] = [];
+    lines.push('{');
+    lines.push('  // 默认使用的模型');
+    lines.push(`  "default_model": "${config.default_model}",`);
+    lines.push('');
+    lines.push('  // 系统推荐的最快模型（由 --test-model 自动更新）');
+    lines.push(`  "suggest_model": "${config.suggest_model}",`);
+    lines.push('');
+    lines.push('  // 定时/心跳任务默认模型（未配置则用 default_model）');
+    lines.push(`  "cron-task-model": "${config.cron_task_model ?? ''}",`);
+    lines.push('');
+    lines.push('  // 多模型配置列表');
+    lines.push('  "models": [');
+    
+    config.models.forEach((model, index) => {
+      lines.push('    {');
+      lines.push(`      "name": "${model.name}",`);
+      lines.push(`      "provider": "${model.provider}",`);
+      lines.push(`      "baseURL": "${model.baseURL}",`);
+      lines.push(`      "model": "${model.model}",`);
+      lines.push(`      "apiKey": "${model.apiKey || ''}",`);
+      lines.push(`      "temperature": ${model.temperature},`);
+      lines.push(`      "maxTokens": ${model.maxTokens},`);
+      lines.push(`      "last_update_datetime": ${model.last_update_datetime ? `"${model.last_update_datetime}"` : 'null'},`);
+      lines.push(`      "speed": ${model.speed}`);
+      lines.push(`    }${index < config.models.length - 1 ? ',' : ''}`);
+    });
+    
+    lines.push('  ],');
+    lines.push('');
+    lines.push('  // UI 配置');
+    lines.push('  "ui": {');
+    lines.push('    "banner": {');
+    lines.push(`      "enabled": ${config.ui.banner.enabled},`);
+    lines.push(`      "style": "${config.ui.banner.style}"`);
+    lines.push('    },');
+    if (config.ui.statusBar) {
+      lines.push('    "statusBar": {');
+      lines.push(`      "enabled": ${config.ui.statusBar.enabled},`);
+      lines.push(`      "showTokens": ${config.ui.statusBar.showTokens},`);
+      lines.push(`      "showTime": ${config.ui.statusBar.showTime},`);
+      lines.push(`      "showWorkspace": ${config.ui.statusBar.showWorkspace},`);
+      lines.push(`      "updateInterval": ${config.ui.statusBar.updateInterval}`);
+      lines.push('    },');
+    }
+    lines.push(`    "theme": "${config.ui.theme}"`);
+    lines.push('  },');
+    lines.push('');
+    lines.push('  // 工作区配置');
+    lines.push(`  "workspace": "${config.workspace}",`);
+    lines.push('');
+    lines.push('  // 危险命令确认（true: 执行前需确认 | false: 直接执行）');
+    lines.push(`  "dangerous_cmd": ${config.dangerous_cmd},`);
+    lines.push('');
+    lines.push('  // 工具调用最大迭代次数（最小 5，最大 20，超出范围默认 15）');
+    lines.push(`  "maxIterations": ${config.maxIterations ?? 15},`);
+    lines.push('');
+    lines.push('  // 异构模型路由开关（实验性功能）');
+    lines.push('  // true  = VERONICA 启动时探测所有模型，按任务类型动态选择最合适的可用模型');
+    lines.push('  // false = 始终使用 default_model（默认，推荐新用户保持此设置）');
+    lines.push(`  "multi_model_routing": ${config.multi_model_routing ?? false},`);
+    lines.push('');
+    lines.push('  // 各任务类型首选模型（仅 multi_model_routing = true 时生效）');
+    lines.push('  // 模型名称需在 models[] 中存在；若首选模型不可用，自动降级到同层其他可用模型');
+    lines.push('  "model_routing": {');
+    lines.push(`    "format":    ${config.model_routing?.format ? `"${config.model_routing.format}"` : 'null'},`);
+    lines.push(`    "writing":   ${config.model_routing?.writing ? `"${config.model_routing.writing}"` : 'null'},`);
+    lines.push(`    "code":      ${config.model_routing?.code ? `"${config.model_routing.code}"` : 'null'},`);
+    lines.push(`    "reasoning": ${config.model_routing?.reasoning ? `"${config.model_routing.reasoning}"` : 'null'}`);
+    lines.push('  }');
+    lines.push('}');
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * 从旧版 config.json 迁移到 settings.jsonc，仅首次存在 config.json 且无 settings.jsonc 时调用。
+   * 类型见 types/legacyConfig.ts，新代码勿依赖 Legacy 类型。
+   */
+  private async migrateLegacyConfig(): Promise<void> {
+    try {
+      const data = await fs.readFile(this.legacyConfigPath, 'utf-8');
+      const legacy = JSON.parse(data) as LegacyConfig;
+      
+      // 转换为新配置格式
+      const newConfig: Config = {
+        default_model: 'lmstudio-local',
+        suggest_model: 'lmstudio-local',
+        models: [
+          {
+            name: 'lmstudio-local',
+            provider: 'lmstudio',
+            baseURL: legacy.llm.baseURL,
+            model: legacy.llm.model,
+            apiKey: '',
+            temperature: legacy.llm.temperature,
+            maxTokens: legacy.llm.maxTokens,
+            last_update_datetime: null,
+            speed: null,
+          },
+        ],
+        ui: legacy.ui,
+        workspace: legacy.workspace,
+        dangerous_cmd: true,  // 迁移时默认开启
+        maxIterations: 15,
+      };
+      
+      // 保存新配置
+      await this.save(newConfig);
+      
+      // 备份旧配置
+      const backupPath = this.legacyConfigPath + '.backup';
+      await fs.rename(this.legacyConfigPath, backupPath);
+      
+      console.log('✓ 配置已从 config.json 迁移到 settings.jsonc');
+      console.log(`✓ 旧配置已备份到 ${backupPath}`);
+    } catch (error) {
+      console.error('配置迁移失败:', error);
+      // 迁移失败时使用默认配置
+      await this.save(DEFAULT_CONFIG);
+    }
+  }
+
+  private async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export const configManager = new ConfigManager();

@@ -1,0 +1,61 @@
+{
+  "name": "ani",
+  "version": "0.1.0",
+  "description": "Ani - Minimalist terminal AI assistant",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.tsx"
+  },
+  "keywords": ["cli", "ai", "assistant", "terminal"],
+  "author": "Anders",
+  "license": "MIT",
+  "dependencies": {
+    "@agentclientprotocol/sdk": "^0.21.0",
+    "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "ansi-escapes": "^7.0.0",
+    "axios": "^1.6.5",
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "command-exists": "^1.2.9",
+    "commander": "^14.0.3",
+    "comment-json": "^5.0.0",
+    "diff": "^7.0.0",
+    "dotenv": "^17.4.2",
+    "figlet": "^1.7.0",
+    "fzf": "^0.5.2",
+    "glob": "^13.0.1",
+    "gradient-string": "^2.0.2",
+    "highlight.js": "^11.11.1",
+    "ink": "^6.2.3",
+    "ink-gradient": "^3.0.0",
+    "ink-link": "^4.1.0",
+    "ink-spinner": "^5.0.0",
+    "jsonc-parser": "^3.3.1",
+    "lowlight": "^3.3.0",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0",
+    "open": "^10.1.2",
+    "p-limit": "^7.3.0",
+    "prompts": "^2.4.2",
+    "react": "^19.1.0",
+    "read-package-up": "^12.0.0",
+    "shell-quote": "^1.8.3",
+    "simple-git": "^3.30.0",
+    "string-width": "^7.1.0",
+    "strip-ansi": "^7.1.0",
+    "undici": "^8.2.0",
+    "update-notifier": "^7.3.1",
+    "wrap-ansi": "^9.0.0",
+    "zod": "^3.23.8"
+  },
+  "imports": {
+    "@qwen-code/qwen-code-core": "./src/shim/qwen-code-core.ts",
+    "@qwen-code/web-templates": "./src/shim/web-templates.ts"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0"
+  }
+}
