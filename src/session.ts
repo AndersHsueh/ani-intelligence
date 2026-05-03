@@ -29,3 +29,9 @@ export function addMessage(msg: Message): void {
 export function getMessages(): Message[] {
   return currentSession?.messages ?? [];
 }
+
+export function setMessages(msgs: Message[]): void {
+  if (currentSession) {
+    currentSession.messages = [...msgs];
+  }
+}

@@ -19,6 +19,7 @@ export interface StreamEvent {
   content?: string;
   record?: ToolCallRecord;
   message?: string;
+  conversation?: Message[];
 }
 
 export class LLMClient {
@@ -48,6 +49,7 @@ export class LLMClient {
     messages: Message[],
     workspace: string,
   ): AsyncGenerator<StreamEvent> {
+    const systemPromptWithCwd = `${this.systemPrompt}\n\n## 运行环境\n\n当前工作目录：${workspace}`;
     const provider = ProviderFactory.create(
       this.modelConfig.provider,
       {
@@ -58,7 +60,7 @@ export class LLMClient {
         maxTokens: this.modelConfig.maxTokens,
         promptCaching: this.modelConfig.promptCaching,
       },
-      this.systemPrompt,
+      systemPromptWithCwd,
     );
 
     // Build conversation messages (system prompt is handled by provider)
@@ -131,7 +133,14 @@ export class LLMClient {
         }
 
         if (!hasToolCalls) {
-          // Conversation complete - no more tool calls
+          // Push final assistant text into conversation so it's persisted
+          if (accumulatedContent) {
+            conversation.push({
+              role: 'assistant',
+              content: accumulatedContent,
+              timestamp: new Date(),
+            });
+          }
           break;
         }
       } catch (error: unknown) {
@@ -140,6 +149,6 @@ export class LLMClient {
       }
     }
 
-    yield { type: 'done' };
+    yield { type: 'done', conversation };
   }
 }

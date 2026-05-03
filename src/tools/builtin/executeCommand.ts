@@ -37,7 +37,7 @@ export const executeCommandTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { command, timeout = 30000 } = params;
-    const cwd = params.cwd ?? context?.workspace ?? process.cwd();
+    const cwd = params.cwd ?? process.cwd();
 
     try {
       const isWindows = process.platform === 'win32';

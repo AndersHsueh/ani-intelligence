@@ -25,7 +25,7 @@ export const getCurrentDirectoryTool: AniTool = {
         progress: 0
       });
 
-      const currentDir = context?.workspace ?? cwd();
+      const currentDir = cwd();
 
       // 报告完成
       onUpdate?.({

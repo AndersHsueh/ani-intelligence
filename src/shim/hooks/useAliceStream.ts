@@ -16,7 +16,7 @@ import type { ToolCallRecord } from '../../types/tool.js';
 import type { SlashCommandProcessorResult } from '../../ui/types.js';
 import { LLMClient, type StreamEvent } from '../../core/llm.js';
 import { configManager } from '../../aniConfig.js';
-import { createSession, addMessage } from '../../session.js';
+import { createSession, getSession, addMessage, getMessages, setMessages } from '../../session.js';
 
 interface TrackedToolCall {
   callId: string;
@@ -113,7 +113,7 @@ export const useAliceStream = (
     abortControllerRef.current = ac;
 
     try {
-      const workspace = configManager.get().workspace || process.cwd();
+      const workspace = process.cwd();
       const modelConfig = configManager.getDefaultModel();
       if (!modelConfig) {
         addItem({ type: 'error', text: 'Error: No model configured' } as Omit<HistoryItem, 'id'>, Date.now());
@@ -121,14 +121,14 @@ export const useAliceStream = (
         return;
       }
 
-      // Create session if not exists
-      createSession(workspace);
+      // Create session once per app lifetime
+      if (!getSession()) createSession(workspace);
 
-      // Add user message
+      // Add user message to session history
       addMessage({ role: 'user', content: prompt, timestamp: new Date() });
 
       const client = new LLMClient(modelConfig);
-      const messages = [{ role: 'user' as const, content: prompt, timestamp: new Date() }];
+      const messages = getMessages();
 
       for await (const event of client.chatStream(messages, workspace)) {
         if (ac.signal.aborted) break;
@@ -202,6 +202,10 @@ export const useAliceStream = (
         toolGroupIdRef.current = id;
       }
     } else if (event.type === 'done') {
+      // Sync full conversation (user + tool interactions + assistant) back to session
+      if (event.conversation) {
+        setMessages(event.conversation);
+      }
       const finalText = pendingTextRef.current;
       if (finalText) {
         addItemFn(
