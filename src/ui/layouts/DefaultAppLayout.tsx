@@ -7,6 +7,7 @@
 import type React from 'react';
 import { Box } from 'ink';
 import { MainContent } from '../components/MainContent.js';
+import { TaskStatusBar } from '../components/TaskStatusBar.js';
 import { DialogManager } from '../components/DialogManager.js';
 import { Composer } from '../components/Composer.js';
 import { ExitWarning } from '../components/ExitWarning.js';
@@ -19,6 +20,7 @@ export const DefaultAppLayout: React.FC = () => {
 
   return (
     <Box flexDirection="column" width={terminalWidth}>
+      <TaskStatusBar />
       <MainContent />
 
       <Box flexDirection="column" ref={uiState.mainControlsRef}>

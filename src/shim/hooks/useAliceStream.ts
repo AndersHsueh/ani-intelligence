@@ -18,6 +18,7 @@ import { LLMClient, type StreamEvent } from '../../core/llm.js';
 import { configManager } from '../../aniConfig.js';
 import { createSession, getSession, addMessage, getMessages, setMessages } from '../../session.js';
 import { detectStartupMode, getSystemPromptPath } from '../../onboarding/index.js';
+import { InboxWatcher, type InboxSignal } from '../../ani/inboxWatcher.js';
 
 interface TrackedToolCall {
   callId: string;
@@ -248,6 +249,25 @@ export const useAliceStream = (
       submitQuery('你好');
     }
   }, [streamingState, submitQuery]);
+
+  // Initialize InboxWatcher — listen for task completion/failure signals
+  useEffect(() => {
+    const watcher = new InboxWatcher();
+    watcher.start((signal: InboxSignal) => {
+      if (signal.status === 'done') {
+        addItem(
+          { type: 'info', text: `[系统提示：后台任务已完成，结果在 ~/.ani/tasks/${signal.taskId}/subtasks/ 下]` } as Omit<HistoryItem, 'id'>,
+          Date.now(),
+        );
+      } else {
+        addItem(
+          { type: 'error', text: `[系统提示：后台任务失败，原因：${signal.message ?? '未知'}，请告知用户]` } as Omit<HistoryItem, 'id'>,
+          Date.now(),
+        );
+      }
+    });
+    return () => { watcher.stop(); };
+  }, [addItem]);
 
   const pendingHistoryItems = useMemo((): HistoryItemWithoutId[] => {
     const items: HistoryItemWithoutId[] = [];

@@ -34,5 +34,31 @@
   // 当前工作区路径
   "workspace": ".",
   // 是否启用危险命令（需要用户确认）
-  "dangerous_cmd": true
+  "dangerous_cmd": true,
+
+  // Sub-agent 调用配置
+  "subagent": {
+    // 优先使用的 agent 工具
+    // 可选值："claude-code" | "codebuddy" | "trae-cli"
+    "default": "claude-code",
+
+    // 降级顺序：default 不可用时依次尝试
+    "fallback": ["codebuddy", "trae-cli"],
+
+    // claude-code 配置
+    "claude-code": {
+      // 指向低成本模型的 settings 文件（可选）
+      // 文件放在 ~/.ani/subagent-settings/ 下
+      "settings": "~/.ani/subagent-settings/minimax.json"
+    },
+
+    // codebuddy 配置
+    "codebuddy": {
+      // 指定模型（可选，不填则用 codebuddy 默认模型）
+      "model": "minimax-m2.7"
+    },
+
+    // trae-cli 配置
+    "trae-cli": {}
+  }
 }

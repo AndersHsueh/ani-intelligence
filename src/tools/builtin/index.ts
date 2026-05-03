@@ -18,6 +18,7 @@ export { loadSkillTool } from './loadSkill.js';
 export { writeUserProfileTool } from './writeUserProfile.js';
 export { writeJobFlowTool } from './writeJobFlow.js';
 export { writeProjectFilesTool } from './writeProjectFiles.js';
+export { dispatchTaskTool, getTaskManager } from './dispatchTask.js';
 
 import { readFileTool } from './readFile.js';
 import { writeFileTool } from './writeFile.js';
@@ -35,6 +36,7 @@ import { loadSkillTool } from './loadSkill.js';
 import { writeUserProfileTool } from './writeUserProfile.js';
 import { writeJobFlowTool } from './writeJobFlow.js';
 import { writeProjectFilesTool } from './writeProjectFiles.js';
+import { dispatchTaskTool } from './dispatchTask.js';
 
 /**
  * 所有内置工具列表
@@ -57,4 +59,5 @@ export const builtinTools = [
   writeUserProfileTool,
   writeJobFlowTool,
   writeProjectFilesTool,
+  dispatchTaskTool,
 ];

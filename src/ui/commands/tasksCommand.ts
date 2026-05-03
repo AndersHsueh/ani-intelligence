@@ -1,115 +1,138 @@
 /**
- * /tasks — 查看 VERONICA 任务列表
+ * /tasks — 查看后台任务列表
  *
  * 用法：
- *   /tasks         — 显示活跃任务（running / preparing / background）
+ *   /tasks         — 显示活跃任务（非 done）
  *   /tasks all     — 显示所有任务（含已完成、失败）
+ *   /tasks clear   — 清除已完成的任务记录
  */
 
 import type { SlashCommand, CommandContext, MessageActionReturn } from './types.js';
 import { CommandKind } from './types.js';
-import { DaemonClient } from '../../utils/daemonClient.js';
-import { formatDuration } from '../utils/formatters.js';
+import { AniTaskManager } from '../../ani/taskManager.js';
+import type { TaskMeta } from '../../ani/taskManager.js';
 
-/** 状态 → 短标签（固定宽度 12 字符） */
-function statusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    pending:       '[pending]   ',
-    preparing:     '[preparing] ',
-    running:       '[running]   ',
-    waiting_input: '[waiting]   ',
-    background:    '[background]',
-    completed:     '[done]      ',
-    failed:        '[failed]    ',
-    cancelled:     '[cancelled] ',
-    resumable:     '[resumable] ',
+/** 状态图标 */
+function statusIcon(status: TaskMeta['status']): string {
+  const icons: Record<string, string> = {
+    pending: '○',
+    running: '⟳',
+    done: '✓',
+    failed: '✗',
   };
-  return labels[status] ?? `[${status}]`.padEnd(12);
+  return icons[status] ?? '?';
 }
 
-function renderTaskList(tasks: Array<{
-  taskId: string;
-  agentProfileId: string;
-  title: string;
-  summary?: string;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-  startedAt?: number;
-  finishedAt?: number;
-  errorMessage?: string;
-}>): string {
+/** 状态标签 */
+function statusLabel(status: TaskMeta['status']): string {
+  const labels: Record<string, string> = {
+    pending: '等待中',
+    running: '进行中',
+    done: '完成',
+    failed: '失败',
+  };
+  return labels[status] ?? status;
+}
+
+/** 计算相对时间 */
+function relativeTime(isoStr: string): string {
+  const now = Date.now();
+  const then = new Date(isoStr).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+
+  if (diffMin < 1) return '刚刚';
+  if (diffMin < 60) return `${diffMin}分钟前`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}小时前`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}天前`;
+}
+
+function renderTaskList(tasks: TaskMeta[], showAll: boolean): string {
   if (tasks.length === 0) {
-    return '暂无任务';
+    return showAll ? '暂无后台任务' : '暂无活跃后台任务\n提示：使用 /tasks all 查看所有历史任务';
   }
 
-  const now = Date.now();
-  const lines: string[] = [`Tasks (${tasks.length})`];
-  lines.push('─'.repeat(60));
+  const lines: string[] = ['后台任务状态', ''];
 
   for (const t of tasks) {
-    const id = t.taskId.slice(0, 6);
+    const icon = statusIcon(t.status);
     const label = statusLabel(t.status);
-    const title = t.title.length > 36 ? t.title.slice(0, 33) + '...' : t.title;
-    const profile = t.agentProfileId !== 'main' ? ` [${t.agentProfileId}]` : '';
+    const progress = t.status === 'running' ? `  ${Math.round(t.progress * 100)}%` : '';
+    const eta = t.eta_seconds && t.status === 'running' ? `  约 ${Math.ceil(t.eta_seconds / 60)} 分钟` : '';
+    const time = t.status === 'done' || t.status === 'failed'
+      ? `  (${relativeTime(t.updated_at)})`
+      : '';
+    const error = t.status === 'failed' && t.error ? `  ${t.error.message.slice(0, 40)}` : '';
 
-    let line = `${label}  ${id}  ${title}${profile}`;
-
-    // 耗时显示
-    if (t.finishedAt && t.startedAt) {
-      line += `  (${formatDuration(t.finishedAt - t.startedAt)})`;
-    } else if (t.startedAt) {
-      line += `  (${formatDuration(now - t.startedAt)}...)`;
-    }
-
-    lines.push(line);
-
-    // 失败任务显示错误原因
-    if (t.status === 'failed' && t.errorMessage) {
-      const errShort = t.errorMessage.slice(0, 60);
-      lines.push(`              ↳ ${errShort}`);
-    }
-
-    // 活跃任务显示摘要
-    if (t.summary && ['running', 'preparing', 'background'].includes(t.status)) {
-      lines.push(`              ↳ ${t.summary}`);
-    }
+    lines.push(`${icon} ${t.name}  ${label}${progress}${eta}${time}${error}`);
   }
 
-  lines.push('─'.repeat(60));
+  lines.push('');
+  if (!showAll) {
+    lines.push('输入 /tasks all 查看所有任务（含已完成）');
+  } else {
+    lines.push('输入 /tasks clear 清除已完成的任务记录');
+  }
+
   return lines.join('\n');
 }
 
 export const tasksCommand: SlashCommand = {
   name: 'tasks',
   altNames: ['task'],
-  description: '查看 VERONICA 活跃任务列表（/tasks all 查看全部）',
+  description: '查看后台任务列表（/tasks all 查看全部）',
   kind: CommandKind.BUILT_IN,
   action: async (
     _context: CommandContext,
     args: string,
   ): Promise<MessageActionReturn> => {
-    const showAll = args.trim() === 'all';
-    const client = new DaemonClient();
+    const trimmed = args.trim();
+
+    // /tasks clear — 清除已完成任务
+    if (trimmed === 'clear') {
+      try {
+        const taskManager = new AniTaskManager();
+        const allTasks = await taskManager.listTasks();
+        const doneTasks = allTasks.filter(t => t.status === 'done');
+        // 清除操作：暂不支持删除，只返回提示
+        return {
+          type: 'message',
+          messageType: 'info',
+          content: `共 ${doneTasks.length} 个已完成任务（清除功能待实现）`,
+        };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return {
+          type: 'message',
+          messageType: 'error',
+          content: `无法获取任务列表：${msg}`,
+        };
+      }
+    }
+
+    const showAll = trimmed === 'all';
 
     try {
-      const tasks = await client.listTasks(showAll ? { status: 'all' } : undefined);
-      const text = renderTaskList(tasks);
-      const hint = !showAll && tasks.length === 0
-        ? '\n提示：使用 /tasks all 查看所有历史任务'
-        : '';
+      const taskManager = new AniTaskManager();
+      const allTasks = await taskManager.listTasks();
+
+      // 默认只显示非 done 的任务
+      const tasks = showAll ? allTasks : allTasks.filter(t => t.status !== 'done');
+      const text = renderTaskList(tasks, showAll);
 
       return {
         type: 'message',
         messageType: 'info',
-        content: text + hint,
+        content: text,
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return {
         type: 'message',
         messageType: 'error',
-        content: `无法获取任务列表：${msg}\n请确认 daemon 正在运行（alice daemon start）`,
+        content: `无法获取任务列表：${msg}`,
       };
     }
   },
