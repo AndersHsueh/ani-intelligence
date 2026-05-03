@@ -14,6 +14,7 @@ export { executeCommandTool, isDangerousCommand } from './executeCommand.js';
 export { askUserTool, setQuestionDialogCallback } from './askUser.js';
 export { todoWriteTool, todoReadTool, resetTodos } from './todo.js';
 export { sequentialThinkingTool } from './sequentialThinking.js';
+export { loadSkillTool } from './loadSkill.js';
 
 import { readFileTool } from './readFile.js';
 import { writeFileTool } from './writeFile.js';
@@ -27,6 +28,7 @@ import { executeCommandTool } from './executeCommand.js';
 import { askUserTool } from './askUser.js';
 import { todoWriteTool, todoReadTool } from './todo.js';
 import { sequentialThinkingTool } from './sequentialThinking.js';
+import { loadSkillTool } from './loadSkill.js';
 
 /**
  * 所有内置工具列表
@@ -45,4 +47,5 @@ export const builtinTools = [
   todoWriteTool,
   todoReadTool,
   sequentialThinkingTool,
+  loadSkillTool,
 ];

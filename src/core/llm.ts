@@ -11,6 +11,7 @@ import { toolRegistry } from '../tools/registry.js';
 import type { Message, ModelConfig } from '../types/index.js';
 import type { ToolCallRecord, ToolExecutionContext } from '../types/tool.js';
 import { getErrorMessage } from '../utils/error.js';
+import { skillManager } from './skillManager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -49,7 +50,11 @@ export class LLMClient {
     messages: Message[],
     workspace: string,
   ): AsyncGenerator<StreamEvent> {
-    const systemPromptWithCwd = `${this.systemPrompt}\n\n## 运行环境\n\n当前工作目录：${workspace}`;
+    await skillManager.discover();
+    const skillsSummary = skillManager.buildSkillsSummary();
+    const systemPromptWithCwd =
+      `${this.systemPrompt}\n\n## 运行环境\n\n当前工作目录：${workspace}` +
+      (skillsSummary ? '\n\n' + skillsSummary : '');
     const provider = ProviderFactory.create(
       this.modelConfig.provider,
       {
