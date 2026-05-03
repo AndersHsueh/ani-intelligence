@@ -2,7 +2,7 @@
  * useAliceStream - Ani's single-process LLM stream hook.
  * Connects the qwen-code TUI to Ani's local LLMClient (no daemon).
  */
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import type { ThoughtSummary, Config } from '../qwen-code-core.js';
 import {
   StreamingState,
@@ -17,6 +17,7 @@ import type { SlashCommandProcessorResult } from '../../ui/types.js';
 import { LLMClient, type StreamEvent } from '../../core/llm.js';
 import { configManager } from '../../aniConfig.js';
 import { createSession, getSession, addMessage, getMessages, setMessages } from '../../session.js';
+import { detectStartupMode, getSystemPromptPath } from '../../onboarding/index.js';
 
 interface TrackedToolCall {
   callId: string;
@@ -67,6 +68,7 @@ export const useAliceStream = (
   const pendingTextRef = useRef('');
   const pendingItemIdRef = useRef<number | null>(null);
   const toolGroupIdRef = useRef<number | null>(null);
+  const onboardingTriggeredRef = useRef(false);
 
   const cancelOngoingRequest = useCallback(() => {
     if (streamingState === StreamingState.Responding) {
@@ -127,7 +129,11 @@ export const useAliceStream = (
       // Add user message to session history
       addMessage({ role: 'user', content: prompt, timestamp: new Date() });
 
-      const client = new LLMClient(modelConfig);
+      // Detect onboarding mode
+      const mode = detectStartupMode();
+      const systemPromptPath = getSystemPromptPath(mode);
+
+      const client = new LLMClient(modelConfig, { systemPromptPath });
       const messages = getMessages();
 
       for await (const event of client.chatStream(messages, workspace)) {
@@ -231,6 +237,17 @@ export const useAliceStream = (
   }, [streamingState, submitQuery]);
 
   const handleApprovalModeChange = useCallback((_mode: any) => {}, []);
+
+  // Auto-trigger onboarding on first mount if no user profile exists
+  useEffect(() => {
+    if (onboardingTriggeredRef.current) return;
+    if (streamingState !== StreamingState.Idle) return;
+    const mode = detectStartupMode();
+    if (mode === 'onboarding') {
+      onboardingTriggeredRef.current = true;
+      submitQuery('你好');
+    }
+  }, [streamingState, submitQuery]);
 
   const pendingHistoryItems = useMemo((): HistoryItemWithoutId[] => {
     const items: HistoryItemWithoutId[] = [];

@@ -23,24 +23,28 @@ export interface StreamEvent {
   conversation?: Message[];
 }
 
+export interface LLMClientOptions {
+  systemPromptPath?: string;
+}
+
 export class LLMClient {
   private modelConfig: ModelConfig;
   private systemPrompt: string;
   private maxIterations: number;
   private toolExecutor: ToolExecutor;
 
-  constructor(modelConfig: ModelConfig) {
+  constructor(modelConfig: ModelConfig, options?: LLMClientOptions) {
     this.modelConfig = modelConfig;
-    this.systemPrompt = this.loadSystemPrompt();
+    this.systemPrompt = this.loadSystemPrompt(options?.systemPromptPath);
     this.maxIterations = configManager.get().maxIterations ?? 15;
     this.toolExecutor = new ToolExecutor(configManager.get());
   }
 
-  private loadSystemPrompt(): string {
-    // Try project root prompt/default.md
+  private loadSystemPrompt(customPath?: string): string {
     const projectRoot = path.join(__dirname, '..', '..');
+    const promptPath = customPath ?? path.join(projectRoot, 'prompt', 'default.md');
     try {
-      return readFileSync(path.join(projectRoot, 'prompt', 'default.md'), 'utf-8');
+      return readFileSync(promptPath, 'utf-8');
     } catch {
       return 'You are Ani, a minimalist terminal AI assistant.';
     }

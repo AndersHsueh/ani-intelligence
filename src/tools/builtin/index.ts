@@ -15,6 +15,9 @@ export { askUserTool, setQuestionDialogCallback } from './askUser.js';
 export { todoWriteTool, todoReadTool, resetTodos } from './todo.js';
 export { sequentialThinkingTool } from './sequentialThinking.js';
 export { loadSkillTool } from './loadSkill.js';
+export { writeUserProfileTool } from './writeUserProfile.js';
+export { writeJobFlowTool } from './writeJobFlow.js';
+export { writeProjectFilesTool } from './writeProjectFiles.js';
 
 import { readFileTool } from './readFile.js';
 import { writeFileTool } from './writeFile.js';
@@ -29,6 +32,9 @@ import { askUserTool } from './askUser.js';
 import { todoWriteTool, todoReadTool } from './todo.js';
 import { sequentialThinkingTool } from './sequentialThinking.js';
 import { loadSkillTool } from './loadSkill.js';
+import { writeUserProfileTool } from './writeUserProfile.js';
+import { writeJobFlowTool } from './writeJobFlow.js';
+import { writeProjectFilesTool } from './writeProjectFiles.js';
 
 /**
  * 所有内置工具列表
@@ -48,4 +54,7 @@ export const builtinTools = [
   todoReadTool,
   sequentialThinkingTool,
   loadSkillTool,
+  writeUserProfileTool,
+  writeJobFlowTool,
+  writeProjectFilesTool,
 ];
