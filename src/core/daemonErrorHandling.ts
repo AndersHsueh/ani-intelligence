@@ -3,7 +3,7 @@
  * 为 DaemonClient 添加重试、错误分类能力
  */
 
-import { AliceError, classifyError, withRetryFn, type RetryOptions } from './errorHandler.js';
+import { AniError, classifyError, withRetryFn, type RetryOptions } from './errorHandler.js';
 
 /**
  * DaemonClient 重试配置
@@ -31,15 +31,15 @@ export function wrapWithRetry<T extends (...args: any[]) => Promise<any>>(
 
 /**
  * 处理 DaemonClient 错误
- * 将原始错误转换为 AliceError 并进行分类
+ * 将原始错误转换为 AniError 并进行分类
  */
-export function handleDaemonError(error: unknown, context: string = '操作'): AliceError {
+export function handleDaemonError(error: unknown, context: string = '操作'): AniError {
   const errorContext = classifyError(error);
   const enhancedContext = {
     ...errorContext,
     message: `[Daemon] ${context} 失败: ${errorContext.message}`,
   };
-  return new AliceError(enhancedContext);
+  return new AniError(enhancedContext);
 }
 
 /**
@@ -49,35 +49,35 @@ export class DaemonErrorHandlers {
   /**
    * 处理连接错误 (wrap HTTP/Socket 请求)
    */
-  static handleConnectionError(error: unknown): AliceError {
+  static handleConnectionError(error: unknown): AniError {
     return handleDaemonError(error, '连接');
   }
 
   /**
    * 处理超时错误
    */
-  static handleTimeoutError(error: unknown): AliceError {
+  static handleTimeoutError(error: unknown): AniError {
     return handleDaemonError(error, '请求超时');
   }
 
   /**
    * 处理认证错误
    */
-  static handleAuthError(error: unknown): AliceError {
+  static handleAuthError(error: unknown): AniError {
     return handleDaemonError(error, '认证');
   }
 
   /**
    * 处理会话错误
    */
-  static handleSessionError(error: unknown): AliceError {
+  static handleSessionError(error: unknown): AniError {
     return handleDaemonError(error, '会话');
   }
 
   /**
    * 处理 chat 错误
    */
-  static handleChatError(error: unknown): AliceError {
+  static handleChatError(error: unknown): AniError {
     return handleDaemonError(error, '对话');
   }
 }

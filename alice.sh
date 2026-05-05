@@ -1,3 +1,2 @@
 clear
-npm run dev
- 
+ani run dev

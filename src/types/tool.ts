@@ -84,7 +84,7 @@ export interface ToolExecutionContext {
  * ALICE 工具接口（标准化）
  * 所有工具应实现此接口，支持流式更新
  * @example
- * const myTool: AliceTool = {
+ * const myTool: AniTool = {
  *   name: 'myTool',
  *   label: '我的工具',
  *   description: '工具描述',
@@ -95,7 +95,7 @@ export interface ToolExecutionContext {
  *   }
  * };
  */
-export interface AliceTool {
+export interface AniTool {
   /** 工具唯一标识（小写字母+下划线） */
   name: string;
   /** 兼容别名（可选） */

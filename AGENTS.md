@@ -1,4 +1,4 @@
-# ALICE CLI 开发指南
+# ANI CLI 开发指南
 
 ## 进入仓库的第一规则
 
@@ -8,16 +8,16 @@
 
 ## 项目概述
 
-ALICE 是一个基于大语言模型的智能办公助手 CLI 工具，采用 Node.js + TypeScript + Ink (React for CLI) 技术栈。
+Ani 是一个基于大语言模型的智能办公助手 CLI 工具，采用 Node.js + TypeScript + Ink (React for CLI) 技术栈。
 
 ### Agent 产品体系
 
 - **VERONICA**（daemon）：**V**erified **E**mbedded **R**esilient **O**rchestration **N**eural **I**ntelligent **C**ontrol **A**gent（经验证的嵌入式弹性神经智能控制代理）。常驻服务，通过 `veronica` 命令管理。
-- **ALICE**（主 CLI）：**A**ccelerated **L**ogic **I**nference **C**ore **E**xecutor（加速逻辑推理核心执行器）。`alice` 命令入口，与 VERONICA 配合。
+- **Ani**（主 CLI）：**A**ccelerated **L**ogic **I**nference **C**ore **E**xecutor（加速逻辑推理核心执行器）。`alice` 命令入口，与 VERONICA 配合。
 - **DIANA**（规划中）：移动端 Agent。**D**ynamic **I**ntelligent **A**ccessible **N**etworked **A**gent（动态智能可及网络化代理）。
 - **ANDERS**（规划中）：架构师 Agent。**A**rchitectural **N**exus **D**isciplined **E**ngineering **R**easoning **S**ystem（架构枢纽以及纪律化工程推理系统）。
 
-Banner 与 TUI 中应体现 **VERONICA、ALICE** 的全称或中文意涵（副标题、状态栏、关于信息等）；详见 `docs/REFACTOR_PLAN.md` 产品与品牌概念。
+Banner 与 TUI 中应体现 **VERONICA、Ani** 的全称或中文意涵（副标题、状态栏、关于信息等）；详见 `docs/REFACTOR_PLAN.md` 产品与品牌概念。
 
 ## 核心命令
 
@@ -204,7 +204,7 @@ export async function readFile(path: string, encoding: string = 'utf-8') {
 ## 目录结构
 
 ```
-alice-cli/
+ani-cli/
 ├── src/
 │   ├── index.tsx           # CLI 入口
 │   ├── cli/                # UI 层

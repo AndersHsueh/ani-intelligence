@@ -58,7 +58,7 @@ export class ConfigManager {
   private config: Config | null = null;
 
   constructor() {
-    this.configDir = path.join(os.homedir(), '.alice');
+    this.configDir = path.join(os.homedir(), '.ani');
     this.settingsPath = path.join(this.configDir, 'settings.jsonc');
     this.legacyConfigPath = path.join(this.configDir, 'config.json');
   }
@@ -201,7 +201,7 @@ export class ConfigManager {
   async loadSystemPrompt(mode: 'office' | 'coder' = 'office'): Promise<string> {
     const filename = mode === 'coder' ? 'coder_prompt.md' : 'system_prompt.md';
 
-    // 优先从用户配置目录加载（~/.alice/agents/），支持用户自定义覆盖
+    // 优先从用户配置目录加载（~/.ani/agents/），支持用户自定义覆盖
     const userPromptPath = path.join(this.configDir, 'agents', filename);
     try {
       return await fs.readFile(userPromptPath, 'utf-8');

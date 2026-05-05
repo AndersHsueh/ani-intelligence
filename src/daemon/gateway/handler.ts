@@ -22,7 +22,7 @@ async function getOrCreatePayload(channel: InboundMessage['channel'], chatId: st
   const sessionId = await getChannelSessionId(channel, chatId);
   if (sessionId) return { sessionId, workspace: '' };
 
-  const base = path.join(os.homedir(), '.alice', 'channel-workspaces', channel);
+  const base = path.join(os.homedir(), '.ani', 'channel-workspaces', channel);
   const workspace = path.join(base, sanitizeChatId(chatId));
   return { workspace };
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Alice CLI entry point
- * Interactive mode: renders qwen-code Ink TUI with Alice daemon backend
+ * Ani CLI entry point
+ * Interactive mode: renders qwen-code Ink TUI with Ani daemon backend
  * One-shot mode (-p flag): streams directly to stdout
  */
 
@@ -85,7 +85,7 @@ async function startTUI(cliOptions: any): Promise<void> {
     try { process.chdir(cliOptions.workspace); } catch {}
   }
 
-  // Create Alice Config shim
+  // Create Ani Config shim
   const config = new Config({
     model: cliOptions.model || aliceConfig.default_model,
     workingDir: process.cwd(),
@@ -99,7 +99,7 @@ async function startTUI(cliOptions: any): Promise<void> {
   // Create minimal settings
   const settings = createMinimalSettings();
 
-  // Create minimal initialization result (Alice skips auth - daemon handles it)
+  // Create minimal initialization result (Ani skips auth - daemon handles it)
   const initializationResult = {
     authError: null,
     themeError: null,

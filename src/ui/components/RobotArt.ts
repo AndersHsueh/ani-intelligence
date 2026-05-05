@@ -1,5 +1,5 @@
 /**
- * Alice TUI — 机器人形象定义
+ * Ani TUI — 机器人形象定义
  * 独立文件，方便产品迭代替换
  * Updated by AndersHsueh
  */

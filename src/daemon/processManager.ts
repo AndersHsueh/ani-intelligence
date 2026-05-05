@@ -13,7 +13,7 @@ export class ProcessManager {
   private daemonScript: string;
 
   constructor() {
-    const runDir = path.join(os.homedir(), '.alice', 'run');
+    const runDir = path.join(os.homedir(), '.ani', 'run');
     this.pidFile = path.join(runDir, 'daemon.pid');
     
     // 获取 daemon 入口脚本路径（dist/daemon/index.js）

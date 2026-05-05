@@ -1,7 +1,7 @@
 /**
- * useGeminiStream — Alice daemon adapter
+ * useGeminiStream — Ani daemon adapter
  *
- * Routes all streaming calls to Alice's DaemonClient instead of the Gemini API.
+ * Routes all streaming calls to Ani's DaemonClient instead of the Gemini API.
  * The return interface is identical to the original useGeminiStream hook.
  */
-export { useAliceStream as useGeminiStream } from '../../shim/hooks/useAliceStream.js';
+export { useAniStream as useGeminiStream } from '../../shim/hooks/useAniStream.js';

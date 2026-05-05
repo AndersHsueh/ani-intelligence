@@ -24,7 +24,7 @@ export interface CLIOptions {
  * 使用示例:
  * ```bash
  * alice --model gpt-4 --workspace /tmp --no-banner
- * alice --config ~/.alice/custom.jsonc
+ * alice --config ~/.ani/custom.jsonc
  * alice --test-model
  * ```
  */

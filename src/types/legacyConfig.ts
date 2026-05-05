@@ -1,5 +1,5 @@
 /**
- * 仅用于从 ~/.alice/config.json 迁移到 settings.jsonc 的旧配置类型。
+ * 仅用于从 ~/.ani/config.json 迁移到 settings.jsonc 的旧配置类型。
  * 新代码请使用 types/index.js 的 Config / ModelConfig，勿引用本文件。
  */
 

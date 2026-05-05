@@ -1,11 +1,11 @@
 /**
  * Shim for @qwen-code/qwen-code-core
- * Provides type stubs and no-op implementations for Alice's daemon-based backend.
+ * Provides type stubs and no-op implementations for Ani's daemon-based backend.
  */
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const QWEN_DIR = '.alice';
+export const QWEN_DIR = '.ani';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -555,7 +555,7 @@ export type TaskResultDisplay = {
 // ─── Config class ─────────────────────────────────────────────────────────────
 
 export class Config {
-  // Alice shim - delegates to Alice daemon
+  // Alice shim - delegates to Ani daemon
   constructor(private readonly params: Record<string, any> = {}) {}
 
   getModel(): string { return this.params.model || ''; }
@@ -670,13 +670,13 @@ export class Config {
   shouldLoadMemoryFromIncludeDirectories(): boolean { return false; }
 }
 
-// ─── GeminiClient (shim - actual work is done by useAliceStream) ─────────────
+// ─── GeminiClient (shim - actual work is done by useAniStream) ─────────────
 
 export class GeminiClient {
   isInitialized(): boolean { return false; }
   initialize(): Promise<void> { return Promise.resolve(); }
   async *sendMessage(): AsyncGenerator<ServerGeminiStreamEvent> {
-    // No-op: replaced by useAliceStream
+    // No-op: replaced by useAniStream
     return;
   }
   addAbortController(_ac: AbortController): void {}
@@ -710,7 +710,7 @@ export class Storage {
   getProjectCommandsDir(): string { return '.'; }
   getUserCommandsDir(): string { return `${process.env.HOME || '~'}/.config/alice/commands`; }
   getWorkspaceSettingsPath(): string {
-    return `${this.workspaceDir || process.cwd()}/.alice/settings.json`;
+    return `${this.workspaceDir || process.cwd()}/.ani/settings.json`;
   }
   static getUserCommandsDir(): string { return `${process.env.HOME || '~'}/.config/alice/commands`; }
   static getGlobalSettingsPath(): string { return `${process.env.HOME || '~'}/.config/alice/settings.json`; }
@@ -738,16 +738,16 @@ export class Storage {
     return `${process.env.HOME || '~'}/.config/alice/memory.md`;
   }
   getProjectTempDir(): string {
-    return `${this.workspaceDir || process.cwd()}/.alice/temp`;
+    return `${this.workspaceDir || process.cwd()}/.ani/temp`;
   }
   getQwenDir(): string {
-    return `${this.workspaceDir || process.cwd()}/.alice`;
+    return `${this.workspaceDir || process.cwd()}/.ani`;
   }
   getProjectTempCheckpointsDir(): string {
     return `${this.getProjectTempDir()}/checkpoints`;
   }
   static getGlobalQwenDir(): string {
-    return `${process.env.HOME || '~'}/.alice`;
+    return `${process.env.HOME || '~'}/.ani`;
   }
 }
 

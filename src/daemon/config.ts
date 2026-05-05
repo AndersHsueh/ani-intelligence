@@ -1,6 +1,6 @@
 /**
  * Daemon 配置管理
- * 独立配置文件 ~/.alice/daemon_settings.jsonc
+ * 独立配置文件 ~/.ani/daemon_settings.jsonc
  */
 
 import fs from 'fs/promises';
@@ -37,7 +37,7 @@ export class DaemonConfigManager {
   private reloadCallbacks: Array<(config: DaemonConfig) => void> = [];
 
   constructor() {
-    this.configPath = path.join(os.homedir(), '.alice', 'daemon_settings.jsonc');
+    this.configPath = path.join(os.homedir(), '.ani', 'daemon_settings.jsonc');
   }
 
   /**

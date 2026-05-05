@@ -71,7 +71,7 @@ export class DaemonClient {
 
   /** 通过 PID 文件检查进程存在性（不依赖 socket/http 连接） */
   private async checkDaemonPid(): Promise<boolean> {
-    const pidFile = path.join(os.homedir(), '.alice', 'run', 'daemon.pid');
+    const pidFile = path.join(os.homedir(), '.ani', 'run', 'daemon.pid');
     try {
       const pidStr = await fs.promises.readFile(pidFile, 'utf-8');
       const pid = parseInt(pidStr.trim(), 10);

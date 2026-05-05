@@ -3,7 +3,7 @@
  * 负责工具调用的执行、进度跟踪和危险命令确认
  */
 
-import type { AliceTool, ToolCall, ToolCallRecord, ToolResult, ToolExecutionContext } from '../types/tool.js';
+import type { AniTool, ToolCall, ToolCallRecord, ToolResult, ToolExecutionContext } from '../types/tool.js';
 import type { Config } from '../types/index.js';
 import { toolRegistry } from './registry.js';
 import { isDangerousCommand } from './builtin/executeCommand.js';

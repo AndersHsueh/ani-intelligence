@@ -3,10 +3,10 @@
  * LLM 按需加载技能的完整内容（三阶段加载的 Instruction 阶段）
  */
 
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { skillManager } from '../../core/skillManager.js';
 
-export const loadSkillTool: AliceTool = {
+export const loadSkillTool: AniTool = {
   name: 'loadSkill',
   label: '加载技能',
   description: 'Load the full instructions of a skill by name. Use this when a user request matches one of the available skills listed in your system prompt. Returns the complete SKILL.md content with detailed instructions.',

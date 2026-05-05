@@ -8,7 +8,7 @@
  */
 
 import path from 'path';
-import type { AliceCommand, CommandContext } from './commandRegistry.js';
+import type { AniCommand, CommandContext } from './commandRegistry.js';
 import { exportToHTML, exportToMarkdown, generateDefaultFilename } from '../utils/exporter.js';
 import { themeManager } from './theme.js';
 import { getErrorMessage } from '../utils/error.js';
@@ -17,7 +17,7 @@ import { modelsCommand, sessionsCommand } from './extendedCommands.js';
 
 // ─── /help ────────────────────────────────────────────────────────
 
-export const helpCommand: AliceCommand = {
+export const helpCommand: AniCommand = {
   name: 'help',
   description: 'Show available commands',
   aliases: ['h', '?'],
@@ -40,7 +40,7 @@ export const helpCommand: AliceCommand = {
 
 // ─── /clear ───────────────────────────────────────────────────────
 
-export const clearCommand: AliceCommand = {
+export const clearCommand: AniCommand = {
   name: 'clear',
   description: 'Clear conversation history',
   aliases: ['cls'],
@@ -53,7 +53,7 @@ export const clearCommand: AliceCommand = {
 
 // ─── /quit ────────────────────────────────────────────────────────
 
-export const quitCommand: AliceCommand = {
+export const quitCommand: AniCommand = {
   name: 'quit',
   description: 'Exit',
   aliases: ['q', 'exit'],
@@ -65,7 +65,7 @@ export const quitCommand: AliceCommand = {
 
 // ─── /config ──────────────────────────────────────────────────────
 
-export const configCommand: AliceCommand = {
+export const configCommand: AniCommand = {
   name: 'config',
   description: 'Show current configuration',
 
@@ -85,7 +85,7 @@ export const configCommand: AliceCommand = {
 
 // ─── /export ──────────────────────────────────────────────────────
 
-export const exportCommand: AliceCommand = {
+export const exportCommand: AniCommand = {
   name: 'export',
   description: 'Export session  (html | md)',
 
@@ -127,7 +127,7 @@ export const exportCommand: AliceCommand = {
 
 // ─── /theme ───────────────────────────────────────────────────────
 
-export const themeCommand: AliceCommand = {
+export const themeCommand: AniCommand = {
   name: 'theme',
   description: 'List or switch themes',
   aliases: ['t'],
@@ -157,7 +157,7 @@ export const themeCommand: AliceCommand = {
 
 // ─── /office, /work ───────────────────────────────────────────────
 
-export const officeCommand: AliceCommand = {
+export const officeCommand: AniCommand = {
   name: 'office',
   description: 'Switch to office mode  (documents, writing, workflow)',
   aliases: ['work'],
@@ -184,7 +184,7 @@ export const officeCommand: AliceCommand = {
 
 // ─── /coder, /dev ─────────────────────────────────────────────────
 
-export const coderCommand: AliceCommand = {
+export const coderCommand: AniCommand = {
   name: 'coder',
   description: 'Switch to coder mode  (software engineering, systems, DevOps)',
   aliases: ['dev'],
@@ -211,7 +211,7 @@ export const coderCommand: AliceCommand = {
 
 // ─── registry ─────────────────────────────────────────────────────
 
-export const builtinCommands: AliceCommand[] = [
+export const builtinCommands: AniCommand[] = [
   helpCommand,
   clearCommand,
   quitCommand,

@@ -16,7 +16,7 @@ export interface SendNotificationOptions {
 /** 可选日志：用于通知发送失败时打日志（与 DaemonLogger 兼容，warn 可为 async） */
 type NotificationLog = { warn: (msg: string, ...args: unknown[]) => void | Promise<void> } | undefined;
 
-const FEISHU_KEYWORD = '#FromAlice';
+const FEISHU_KEYWORD = '#FromAni';
 
 /**
  * POST JSON 到 URL，返回是否成功（2xx 且飞书为 code 0）

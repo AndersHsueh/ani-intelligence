@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { toolRegistry } from '../tools/registry.js';
 import type { MCPServerConfig } from '../utils/mcpConfig.js';
-import type { AliceTool, ToolResult } from '../types/tool.js';
+import type { AniTool, ToolResult } from '../types/tool.js';
 import { getErrorMessage } from '../utils/error.js';
 
 interface MCPConnection {
@@ -126,14 +126,14 @@ export class MCPManager {
   }
 
   /**
-   * 将 MCP 工具包装为 AliceTool
+   * 将 MCP 工具包装为 AniTool
    */
   private wrapMCPTool(
     serverName: string,
     toolName: string,
     mcpTool: { name: string; description?: string; inputSchema?: any },
     client: Client,
-  ): AliceTool {
+  ): AniTool {
     const inputSchema = mcpTool.inputSchema || { type: 'object', properties: {} };
 
     return {

@@ -1,2 +1,1 @@
-veronica start --http
-
+ani-daemon start --http

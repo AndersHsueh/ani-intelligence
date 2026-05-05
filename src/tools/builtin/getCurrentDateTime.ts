@@ -2,10 +2,10 @@
  * 系统工具：获取当前时间
  */
 
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const getCurrentDateTimeTool: AliceTool = {
+export const getCurrentDateTimeTool: AniTool = {
   name: 'getCurrentDateTime',
   label: '获取当前时间',
   description: '获取当前系统时间和时区信息',

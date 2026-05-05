@@ -4,10 +4,10 @@
 
 import path from 'path';
 import simpleGit from 'simple-git';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const getGitInfoTool: AliceTool = {
+export const getGitInfoTool: AniTool = {
   name: 'getGitInfo',
   label: '获取 Git 信息',
   description: '获取当前目录的 Git 仓库信息（分支、状态等）',

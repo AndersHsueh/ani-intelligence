@@ -10,7 +10,7 @@ import * as jsonc from 'jsonc-parser';
 import type { DaemonConfig } from '../types/daemon.js';
 import { DEFAULT_DAEMON_CONFIG } from '../types/daemon.js';
 
-const DAEMON_SETTINGS_PATH = path.join(os.homedir(), '.alice', 'daemon_settings.jsonc');
+const DAEMON_SETTINGS_PATH = path.join(os.homedir(), '.ani', 'daemon_settings.jsonc');
 
 /**
  * 读取 daemon 配置（用于 CLI 连接 daemon）。文件不存在或解析失败时返回默认配置。

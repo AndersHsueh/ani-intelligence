@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'  # 触发条件：推送 v 开头的 tag，如 v0.1.0
-      - 'ALICE-*'  # 也支持 ALICE-MVP-C2 这样的 tag
+      - 'ANI-*'  # 也支持 ANI-MVP-C2 这样的 tag
   workflow_dispatch:  # 允许手动触发
 
 jobs:
@@ -62,28 +62,28 @@ jobs:
         run: |
           pkg . \
             --targets node20-${{ matrix.platform }}-${{ matrix.arch }} \
-            --output dist/alice-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.ext }}
+            --output dist/ani-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.ext }}
 
       - name: Create archive (Unix)
         if: matrix.platform != 'win'
         run: |
           cd dist
-          tar -czf alice-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz alice-${{ matrix.platform }}-${{ matrix.arch }}
+          tar -czf ani-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ani-${{ matrix.platform }}-${{ matrix.arch }}
 
       - name: Create archive (Windows)
         if: matrix.platform == 'win'
         shell: pwsh
         run: |
           cd dist
-          Compress-Archive -Path alice-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath alice-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          Compress-Archive -Path ani-${{ matrix.platform }}-${{ matrix.arch }}.exe -DestinationPath ani-${{ matrix.platform }}-${{ matrix.arch }}.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: alice-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ani-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            dist/alice-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
-            dist/alice-${{ matrix.platform }}-${{ matrix.arch }}.zip
+            dist/ani-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+            dist/ani-${{ matrix.platform }}-${{ matrix.arch }}.zip
           if-no-files-found: ignore
 
   release:
@@ -118,35 +118,35 @@ jobs:
         id: notes
         run: |
           cat << 'EOF' > release_notes.md
-          ## 🎉 ALICE CLI ${{ steps.version.outputs.version }}
+          ## 🎉 ANI CLI ${{ steps.version.outputs.version }}
 
           ### 📦 下载说明
 
           根据您的操作系统选择对应的版本：
 
-          - **Windows x64**: `alice-win-x64.zip`
-          - **macOS Intel**: `alice-macos-x64.tar.gz`
-          - **macOS Apple Silicon**: `alice-macos-arm64.tar.gz`
-          - **Linux x64**: `alice-linux-x64.tar.gz`
+          - **Windows x64**: `ani-win-x64.zip`
+          - **macOS Intel**: `ani-macos-x64.tar.gz`
+          - **macOS Apple Silicon**: `ani-macos-arm64.tar.gz`
+          - **Linux x64**: `ani-linux-x64.tar.gz`
 
           ### 🚀 快速开始
 
           **Windows**:
           ```powershell
           # 解压后直接运行
-          .\alice.exe
+          .\ani.exe
           ```
 
           **macOS / Linux**:
           ```bash
           # 解压
-          tar -xzf alice-*.tar.gz
+          tar -xzf ani-*.tar.gz
 
           # 添加执行权限
-          chmod +x alice-*
+          chmod +x ani-*
 
           # 运行
-          ./alice-*
+          ./ani-*
           ```
 
           ### ✅ 前置要求
@@ -156,18 +156,18 @@ jobs:
 
           ### 📝 更新内容
 
-          请查看 [CHANGELOG](https://github.com/AndersHsueh/Alice/releases)
+          请查看 [CHANGELOG](https://github.com/AndersHsueh/ani-intelligence/releases)
 
           ### 🐛 问题反馈
 
-          遇到问题？请提交 [Issue](https://github.com/AndersHsueh/Alice/issues)
+          遇到问题？请提交 [Issue](https://github.com/AndersHsueh/ani-intelligence/issues)
           EOF
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          name: ALICE CLI ${{ steps.version.outputs.version }}
+          name: ANI CLI ${{ steps.version.outputs.version }}
           body_path: release_notes.md
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}

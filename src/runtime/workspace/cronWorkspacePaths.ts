@@ -35,7 +35,7 @@ export function getDaemonStartCwd(): string {
 }
 
 export function getTempWorkspacePath(): string {
-  return path.join(os.homedir(), '.alice', 'temp-workspace');
+  return path.join(os.homedir(), '.ani', 'temp-workspace');
 }
 
 export async function ensureTempWorkspace(): Promise<void> {

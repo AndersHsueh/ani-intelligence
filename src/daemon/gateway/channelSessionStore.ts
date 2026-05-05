@@ -1,5 +1,5 @@
 /**
- * 通道会话映射：(channel, chatId) -> sessionId，持久化到 ~/.alice/channel_sessions.json
+ * 通道会话映射：(channel, chatId) -> sessionId，持久化到 ~/.ani/channel_sessions.json
  */
 
 import fs from 'fs/promises';
@@ -7,7 +7,7 @@ import path from 'path';
 import os from 'os';
 import type { ChannelName } from './types.js';
 
-const STORE_FILE = path.join(os.homedir(), '.alice', 'channel_sessions.json');
+const STORE_FILE = path.join(os.homedir(), '.ani', 'channel_sessions.json');
 
 type Store = Partial<Record<ChannelName, Record<string, string>>>;
 

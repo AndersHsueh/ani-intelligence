@@ -4,10 +4,10 @@
 
 import { readdir, stat } from 'fs/promises';
 import { join, resolve, isAbsolute } from 'path';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const listFilesTool: AliceTool = {
+export const listFilesTool: AniTool = {
   name: 'listFiles',
   label: '列出目录',
   description: '列出指定目录下的文件和文件夹',

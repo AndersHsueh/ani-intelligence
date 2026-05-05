@@ -45,13 +45,13 @@ export interface ErrorContext {
  * ALICE 错误类
  * 包装错误上下文，提供分类、重试、用户消息等功能
  */
-export class AliceError extends Error {
+export class AniError extends Error {
   constructor(
     public context: ErrorContext,
   ) {
     super(context.message);
-    this.name = 'AliceError';
-    Object.setPrototypeOf(this, AliceError.prototype);
+    this.name = 'AniError';
+    Object.setPrototypeOf(this, AniError.prototype);
   }
 
   /**
@@ -215,14 +215,14 @@ export function withRetry(options: RetryOptions = {}) {
     const original = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      let lastError: AliceError;
+      let lastError: AniError;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           return await original.apply(this, args);
         } catch (error) {
           const context = classifyError(error);
-          lastError = new AliceError(context);
+          lastError = new AniError(context);
 
           if (!context.retryable || attempt === maxRetries) {
             throw lastError;
@@ -269,14 +269,14 @@ export function withRetryFn<T extends (...args: any[]) => Promise<any>>(
   } = options;
 
   return (async (...args: any[]) => {
-    let lastError: AliceError;
+    let lastError: AniError;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await fn(...args);
       } catch (error) {
         const context = classifyError(error);
-        lastError = new AliceError(context);
+        lastError = new AniError(context);
 
         if (!context.retryable || attempt === maxRetries) {
           throw lastError;
@@ -307,11 +307,11 @@ export class ErrorHandler {
    * 处理错误并返回结果对象
    * 适用于需要优雅降级的场景
    */
-  static handle<T>(error: unknown): { success: false; error: AliceError } {
+  static handle<T>(error: unknown): { success: false; error: AniError } {
     const context = classifyError(error);
     return {
       success: false,
-      error: new AliceError(context),
+      error: new AniError(context),
     };
   }
 
@@ -320,21 +320,21 @@ export class ErrorHandler {
    */
   static async tryCatch<T>(
     fn: () => Promise<T>,
-  ): Promise<{ success: true; data: T } | { success: false; error: AliceError }> {
+  ): Promise<{ success: true; data: T } | { success: false; error: AniError }> {
     try {
       const data = await fn();
       return { success: true, data };
     } catch (error) {
       const context = classifyError(error);
-      return { success: false, error: new AliceError(context) };
+      return { success: false, error: new AniError(context) };
     }
   }
 
   /**
    * 判断是否为 ALICE 错误
    */
-  static isAliceError(error: unknown): error is AliceError {
-    return error instanceof AliceError;
+  static isAniError(error: unknown): error is AniError {
+    return error instanceof AniError;
   }
 
   /**

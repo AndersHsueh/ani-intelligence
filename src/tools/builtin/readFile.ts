@@ -4,10 +4,10 @@
 
 import path from 'path';
 import { readFile as fsReadFile } from 'fs/promises';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const readFileTool: AliceTool = {
+export const readFileTool: AniTool = {
   name: 'readFile',
   label: '读取文件',
   description: '读取指定路径的文件内容',

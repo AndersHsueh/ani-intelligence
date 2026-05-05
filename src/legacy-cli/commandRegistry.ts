@@ -63,7 +63,7 @@ export type PickRequest =
  * 所有命令都应实现此接口
  *
  * @example
- * const myCommand: AliceCommand = {
+ * const myCommand: AniCommand = {
  *   name: 'greet',
  *   description: '向用户问好',
  *   aliases: ['hello', 'hi'],
@@ -76,7 +76,7 @@ export type PickRequest =
  *   }
  * };
  */
-export interface AliceCommand {
+export interface AniCommand {
   /** 命令名称（不含 / 前缀） */
   name: string;
 
@@ -102,7 +102,7 @@ export interface AliceCommand {
  * 管理所有已注册的命令
  */
 export class CommandRegistry {
-  private commands = new Map<string, AliceCommand>();
+  private commands = new Map<string, AniCommand>();
   private aliases = new Map<string, string>(); // 别名 -> 命令名映射
 
   /**
@@ -110,7 +110,7 @@ export class CommandRegistry {
    * @param command 要注册的命令
    * @throws 如果命令名已存在
    */
-  register(command: AliceCommand): void {
+  register(command: AniCommand): void {
     // 检查命令名是否已存在
     if (this.commands.has(command.name)) {
       throw new Error(`命令 '${command.name}' 已存在`);
@@ -136,7 +136,7 @@ export class CommandRegistry {
    * @param nameOrAlias 命令名或别名
    * @returns 命令对象，如果不存在则返回 undefined
    */
-  get(nameOrAlias: string): AliceCommand | undefined {
+  get(nameOrAlias: string): AniCommand | undefined {
     // 先查找直接的命令名
     if (this.commands.has(nameOrAlias)) {
       return this.commands.get(nameOrAlias);
@@ -155,7 +155,7 @@ export class CommandRegistry {
    * 获取所有已注册的命令（不包括隐藏命令）
    * @returns 命令列表
    */
-  getAll(): AliceCommand[] {
+  getAll(): AniCommand[] {
     return Array.from(this.commands.values()).filter(cmd => !cmd.hidden);
   }
 

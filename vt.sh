@@ -1,2 +1,1 @@
-veronica stop
-
+ani-daemon stop

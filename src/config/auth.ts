@@ -219,7 +219,7 @@ export function validateAuthMethod(
     return null;
   }
 
-  // Alice daemon: generic API_KEY or unrecognized auth types pass through.
+  // Ani daemon: generic API_KEY or unrecognized auth types pass through.
   // The daemon handles actual authentication; the TUI doesn't need to validate it.
   if (authMethod === AuthType.API_KEY || authMethod) {
     return null;

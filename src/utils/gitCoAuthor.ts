@@ -42,7 +42,7 @@ function appendTrailer(message: string): string {
 }
 
 /**
- * Inject Alice's co-author trailer into `git commit -m ...` commands when safe.
+ * Inject Ani's co-author trailer into `git commit -m ...` commands when safe.
  *
  * This handles the most common agent-generated pattern:
  * `git commit -m "message"` or `git commit -m 'message'`.

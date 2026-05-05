@@ -7,13 +7,13 @@
  * /sessions 命令 — 历史会话
  */
 
-import type { AliceCommand, ModelPickItem } from './commandRegistry.js';
+import type { AniCommand, ModelPickItem } from './commandRegistry.js';
 import { testAllModels } from '../scripts/test-model.js';
 import { configManager } from '../utils/config.js';
 
 // ─── /models ──────────────────────────────────────────────────────
 
-export const modelsCommand: AliceCommand = {
+export const modelsCommand: AniCommand = {
   name: 'models',
   description: 'Manage active model',
 
@@ -98,7 +98,7 @@ export const modelsCommand: AliceCommand = {
 
 // ─── /sessions ────────────────────────────────────────────────────
 
-export const sessionsCommand: AliceCommand = {
+export const sessionsCommand: AniCommand = {
   name: 'sessions',
   description: 'Browse and resume past sessions',
   aliases: ['s'],

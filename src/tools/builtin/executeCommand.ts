@@ -4,7 +4,7 @@
  */
 
 import { spawn } from 'child_process';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 import { injectAliceCoAuthorTrailer, type ShellFlavor } from '../../utils/gitCoAuthor.js';
 import { configManager } from '../../utils/config.js';
@@ -31,7 +31,7 @@ export function isDangerousCommand(command: string): boolean {
   return DANGEROUS_PATTERNS.some(pattern => pattern.test(command));
 }
 
-export const executeCommandTool: AliceTool = {
+export const executeCommandTool: AniTool = {
   name: 'executeCommand',
   label: '执行命令',
   description: '执行 shell 命令并返回输出（支持 Windows/macOS/Linux）',

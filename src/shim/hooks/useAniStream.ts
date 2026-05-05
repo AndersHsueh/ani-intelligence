@@ -1,5 +1,5 @@
 /**
- * useAliceStream - Replaces useGeminiStream for Alice's daemon-based backend.
+ * useAniStream - Replaces useGeminiStream for Alice's daemon-based backend.
  *
  * This hook connects the qwen-code TUI to Alice's DaemonClient instead of
  * Gemini's API. The daemon handles all tool execution server-side.
@@ -49,7 +49,7 @@ function isSlashCommandQuery(input: string): boolean {
 
 // ─── Main hook ────────────────────────────────────────────────────────────────
 
-export const useAliceStream = (
+export const useAniStream = (
   _geminiClient: any, // unused - kept for signature compat
   history: HistoryItem[],
   addItem: UseHistoryManagerReturn['addItem'],
@@ -266,7 +266,7 @@ export const useAliceStream = (
 
   // ── handleApprovalModeChange (no-op for Alice - daemon handles approvals) ─
   const handleApprovalModeChange = useCallback((_mode: any) => {
-    // Alice daemon handles approval mode
+    // Ani daemon handles approval mode
   }, []);
 
   // ── Pending history items (text being streamed) ───────────────────────────

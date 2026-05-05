@@ -27,7 +27,7 @@ export interface SlackNotificationsConfig {
   webhookUrl?: string;
 }
 
-/** 飞书通知配置（自定义机器人 v2，消息须含 #FromAlice） */
+/** 飞书通知配置（自定义机器人 v2，消息须含 #FromAni） */
 export interface FeishuNotificationsConfig {
   webhookUrl?: string;
 }
@@ -41,7 +41,7 @@ export interface NotificationsConfig {
   webhookUrl?: string;
   /** Slack：Incoming Webhook，payload 为 { text } */
   slack?: SlackNotificationsConfig;
-  /** 飞书：v2 机器人，正文自动加 #FromAlice */
+  /** 飞书：v2 机器人，正文自动加 #FromAni */
   feishu?: FeishuNotificationsConfig;
   /** 保底通道：各通道均失效时用此通道发送（配置文件中键为 default-webhook） */
   'default-webhook'?: DefaultWebhookChannel;
@@ -94,7 +94,7 @@ export type DefaultChannel = 'feishu' | 'dingtalk';
 
 export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
   transport: 'unix-socket',
-  socketPath: '~/.alice/run/daemon.sock',
+  socketPath: '~/.ani/run/daemon.sock',
   httpPort: 12345,
   heartbeat: {
     enabled: true,
@@ -108,7 +108,7 @@ export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
   defaultChannel: 'feishu',
   logging: {
     level: 'info',
-    file: '~/.alice/logs/daemon.log',
+    file: '~/.ani/logs/daemon.log',
     maxSize: '10MB',
     maxFiles: 5,
   },

@@ -5,7 +5,7 @@
  * - 维护所有模型的实时健康状态（可用性、延迟、冷却期）
  * - 按任务能力层路由到最合适的可用模型
  * - 指数退避策略（30m → 90m，4小时后标记作废）
- * - 读写 ~/.alice/model_profiles.jsonc 持久化档案
+ * - 读写 ~/.ani/model_profiles.jsonc 持久化档案
  */
 
 import fs from 'fs/promises';
@@ -23,7 +23,7 @@ const COOLDOWN_MULTIPLIER   = 3                  // 退避倍数：30m → 90m
 const OBSOLETE_THRESHOLD_MS = 4 * 60 * 60 * 1000 // 4 小时后标记作废
 const MAX_CONSECUTIVE_FAILURES = 3               // 连续失败几次触发冷却
 
-const PROFILE_FILE = path.join(os.homedir(), '.alice', 'model_profiles.jsonc')
+const PROFILE_FILE = path.join(os.homedir(), '.ani', 'model_profiles.jsonc')
 
 // ---------- 类型定义 ----------
 
@@ -125,8 +125,8 @@ function inferModelCapabilities(model: ModelConfig): ModelCapabilityTier[] {
 
 /** model_profiles.jsonc 首次生成时写入的注释模板 */
 function buildProfileFileHeader(): string {
-  return `// ~/.alice/model_profiles.jsonc
-// Alice 模型档案 - 由 VERONICA 自动维护，用户可手动编辑
+  return `// ~/.ani/model_profiles.jsonc
+// Ani 模型档案 - 由 VERONICA 自动维护，用户可手动编辑
 //
 // 【如何手动标注模型能力】
 // 编辑 notes 字段，用自然语言描述模型特征。

@@ -1,7 +1,7 @@
 {
-  "name": "alice-web-ui",
+  "name": "ani-web-ui",
   "version": "0.1.0",
-  "description": "ALICE Web UI Prototype",
+  "description": "Ani Web UI Prototype",
   "type": "module",
   "scripts": {
     "dev": "vite",

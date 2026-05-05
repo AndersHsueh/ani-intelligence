@@ -3,7 +3,7 @@
  * 管理所有可用工具的注册和查询
  */
 
-import type { AliceTool, OpenAIFunction } from '../types/tool.js';
+import type { AniTool, OpenAIFunction } from '../types/tool.js';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -11,13 +11,13 @@ const ajv = new Ajv();
 addFormats(ajv);
 
 export class ToolRegistry {
-  private tools: Map<string, AliceTool> = new Map();
-  private aliasMap: Map<string, AliceTool> = new Map();
+  private tools: Map<string, AniTool> = new Map();
+  private aliasMap: Map<string, AniTool> = new Map();
 
   /**
    * 注册工具
    */
-  register(tool: AliceTool): void {
+  register(tool: AniTool): void {
     // 验证参数 schema
     const isValid = ajv.validateSchema(tool.parameters);
     if (!isValid) {
@@ -39,21 +39,21 @@ export class ToolRegistry {
   /**
    * 批量注册工具
    */
-  registerAll(tools: AliceTool[]): void {
+  registerAll(tools: AniTool[]): void {
     tools.forEach(tool => this.register(tool));
   }
 
   /**
    * 获取工具
    */
-  get(name: string): AliceTool | undefined {
+  get(name: string): AniTool | undefined {
     return this.tools.get(name) ?? this.aliasMap.get(name);
   }
 
   /**
    * 获取所有工具
    */
-  getAll(): AliceTool[] {
+  getAll(): AniTool[] {
     return Array.from(this.tools.values());
   }
 

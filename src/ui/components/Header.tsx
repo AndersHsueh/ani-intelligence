@@ -2,7 +2,7 @@
  * @license
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- * Updated by AndersHsueh — Alice-style Claude banner
+ * Updated by AndersHsueh — Ani-style Claude banner
  */
 
 import type React from 'react';
@@ -27,8 +27,8 @@ interface HeaderProps {
 
 import { robotArtLines } from './RobotArt.js';
 
-// ── Alice blue theme ──────────────────────────────────────────────────────────
-const ALICE_BLUE = '#00D9FF';
+// ── Ani blue theme ──────────────────────────────────────────────────────────
+const ANI_BLUE = '#00D9FF';
 const DIM_COLOR = '#808080';
 
 // ── Robot art (imported from RobotArt.ts) ─────────────────────────────────────
@@ -94,27 +94,27 @@ const Row: React.FC<RowProps> = ({
     const rLine = '─'.repeat(rightWidth + 2);
     return (
       <Box>
-        <Text color={ALICE_BLUE}>{'│'}</Text>
-        <Text color={ALICE_BLUE}>{lLine}</Text>
-        <Text color={ALICE_BLUE}>{'┼'}</Text>
-        <Text color={ALICE_BLUE}>{rLine}</Text>
-        <Text color={ALICE_BLUE}>{'│'}</Text>
+        <Text color={ANI_BLUE}>{'│'}</Text>
+        <Text color={ANI_BLUE}>{lLine}</Text>
+        <Text color={ANI_BLUE}>{'┼'}</Text>
+        <Text color={ANI_BLUE}>{rLine}</Text>
+        <Text color={ANI_BLUE}>{'│'}</Text>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Text color={ALICE_BLUE}>{'│'}</Text>
-      <Text color={ALICE_BLUE}>{' '}</Text>
+      <Text color={ANI_BLUE}>{'│'}</Text>
+      <Text color={ANI_BLUE}>{' '}</Text>
       {isRobot ? (
-        <Text color={ALICE_BLUE}>{lContent}</Text>
+        <Text color={ANI_BLUE}>{lContent}</Text>
       ) : (
         <Text color={leftColor ?? theme.text.primary}>{lContent}</Text>
       )}
-      <Text color={ALICE_BLUE}>{' │ '}</Text>
+      <Text color={ANI_BLUE}>{' │ '}</Text>
       <Text color={rightColor ?? DIM_COLOR}>{rContent}</Text>
-      <Text color={ALICE_BLUE}>{' │'}</Text>
+      <Text color={ANI_BLUE}>{' │'}</Text>
     </Box>
   );
 };
@@ -135,8 +135,8 @@ export const Header: React.FC<HeaderProps> = ({
   // Total usable width (leave 1 col margin each side)
   const totalWidth = Math.max(60, Math.min(terminalWidth - 2, 120));
 
-  // Title in top border: ╭─── Alice v0.5.6 ─── ... ╮
-  const titleStr = ` Alice v${version} `;
+  // Title in top border: ╭─── Ani v0.5.6 ─── ... ╮
+  const titleStr = ` Ani v${version} `;
   const titleVis = getCachedStringWidth(titleStr);
   const dashTotal = Math.max(0, totalWidth - 2 - 4 - titleVis); // 2 corners, 4 opening dashes
   const dashRight = '─'.repeat(dashTotal);
@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
   // Build left column rows (matched to right col length)
   const leftLines: Array<{ text: string; robot?: boolean; center?: boolean; color?: string }> = [
     { text: '' },
-    { text: 'Welcome to ALICE!', center: true },
+    { text: 'Welcome to Ani!', center: true },
     { text: '' },
     { text: ROBOT_LINES[0], robot: true, center: true },
     { text: ROBOT_LINES[1], robot: true, center: true },
@@ -203,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <Box flexDirection="column" marginX={1}>
       {/* Top border */}
-      <Text color={ALICE_BLUE}>{topBorder}</Text>
+      <Text color={ANI_BLUE}>{topBorder}</Text>
 
       {/* Content rows */}
       {Array.from({ length: rowCount }).map((_, i) => {
@@ -220,14 +220,14 @@ export const Header: React.FC<HeaderProps> = ({
             rightWidth={rightColWidth}
             centerLeft={lEntry.center}
             isRobot={lEntry.robot}
-            leftColor={lEntry.robot ? ALICE_BLUE : (lEntry.color ?? theme.text.primary)}
-            rightColor={rAccent ? ALICE_BLUE : DIM_COLOR}
+            leftColor={lEntry.robot ? ANI_BLUE : (lEntry.color ?? theme.text.primary)}
+            rightColor={rAccent ? ANI_BLUE : DIM_COLOR}
           />
         );
       })}
 
       {/* Bottom border */}
-      <Text color={ALICE_BLUE}>{bottomBorder}</Text>
+      <Text color={ANI_BLUE}>{bottomBorder}</Text>
     </Box>
   );
 };

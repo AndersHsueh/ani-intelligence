@@ -1,4 +1,4 @@
-import type { AliceTool, OpenAIFunction } from '../../types/tool.js';
+import type { AniTool, OpenAIFunction } from '../../types/tool.js';
 import { toolRegistry as baseToolRegistry, ToolRegistry as BaseToolRegistry } from '../../tools/registry.js';
 
 /**
@@ -6,23 +6,23 @@ import { toolRegistry as baseToolRegistry, ToolRegistry as BaseToolRegistry } fr
  * The underlying implementation still reuses the current stable tool system.
  */
 export class RuntimeToolRegistry {
-  private reloadCallbacks: Array<(tools: AliceTool[]) => void> = [];
+  private reloadCallbacks: Array<(tools: AniTool[]) => void> = [];
 
   constructor(private readonly registry: BaseToolRegistry = baseToolRegistry) {}
 
-  register(tool: AliceTool): void {
+  register(tool: AniTool): void {
     this.registry.register(tool);
   }
 
-  registerAll(tools: AliceTool[]): void {
+  registerAll(tools: AniTool[]): void {
     this.registry.registerAll(tools);
   }
 
-  get(name: string): AliceTool | undefined {
+  get(name: string): AniTool | undefined {
     return this.registry.get(name);
   }
 
-  getAll(): AliceTool[] {
+  getAll(): AniTool[] {
     return this.registry.getAll();
   }
 
@@ -57,7 +57,7 @@ export class RuntimeToolRegistry {
   /**
    * 注册工具重载回调
    */
-  onReload(callback: (tools: AliceTool[]) => void): void {
+  onReload(callback: (tools: AniTool[]) => void): void {
     this.reloadCallbacks.push(callback);
   }
 

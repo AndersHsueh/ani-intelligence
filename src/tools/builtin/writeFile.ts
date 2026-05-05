@@ -4,10 +4,10 @@
 
 import { writeFile as fsWriteFile, mkdir } from 'fs/promises';
 import path from 'path';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const writeFileTool: AliceTool = {
+export const writeFileTool: AniTool = {
   name: 'writeFile',
   label: '写入文件',
   description: '将内容写入指定路径的文件。若目录不存在会自动创建。路径可为相对路径（相对于当前工作目录）或绝对路径。',

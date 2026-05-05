@@ -29,7 +29,7 @@ export const insightCommand: SlashCommand = {
     try {
       context.ui.setDebugMessage(t('Generating insights...'));
 
-      const projectsDir = join(os.homedir(), '.alice', 'projects');
+      const projectsDir = join(os.homedir(), '.ani', 'projects');
       if (!context.services.config) {
         throw new Error('Config service is not available');
       }

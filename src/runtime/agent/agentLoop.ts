@@ -207,7 +207,7 @@ export async function* runAgentLoop(
   }
   if (!modelConfig) {
     throw new Error(
-      '未找到默认模型配置。请在 ~/.alice/settings.jsonc 中设置 default_model 为某个 models[].name，并确保 models 列表非空。'
+      '未找到默认模型配置。请在 ~/.ani/settings.jsonc 中设置 default_model 为某个 models[].name，并确保 models 列表非空。'
     );
   }
 

@@ -8,7 +8,7 @@
 
 import type { DaemonClient } from '../utils/daemonClient.js';
 import {
-  AliceError,
+  AniError,
   classifyError,
   ErrorCategory,
   type RetryOptions,
@@ -71,14 +71,14 @@ export async function withDaemonRetry<T>(
   fn: () => Promise<T>,
   config: DaemonClientRetryConfig = DEFAULT_DAEMON_RETRY_CONFIG,
 ): Promise<T> {
-  let lastError: AliceError | null = null;
+  let lastError: AniError | null = null;
 
   for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       const errorContext = classifyError(error);
-      lastError = new AliceError(errorContext);
+      lastError = new AniError(errorContext);
 
       // 不可重试的错误立即抛出
       if (!errorContext.retryable) {
@@ -110,7 +110,7 @@ export async function withDaemonRetry<T>(
   }
 
   // 如果循环结束，抛出最后的错误
-  throw lastError || new AliceError(
+  throw lastError || new AniError(
     classifyError(new Error('Daemon 请求失败')),
   );
 }

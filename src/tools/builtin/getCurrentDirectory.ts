@@ -3,10 +3,10 @@
  */
 
 import { cwd } from 'process';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const getCurrentDirectoryTool: AliceTool = {
+export const getCurrentDirectoryTool: AniTool = {
   name: 'getCurrentDirectory',
   label: '获取当前目录',
   description: '获取当前工作目录的绝对路径',

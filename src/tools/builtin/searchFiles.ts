@@ -4,10 +4,10 @@
 
 import path from 'path';
 import { glob } from 'glob';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
-export const searchFilesTool: AliceTool = {
+export const searchFilesTool: AniTool = {
   name: 'searchFiles',
   label: '搜索文件',
   description: '使用 glob 模式搜索文件',

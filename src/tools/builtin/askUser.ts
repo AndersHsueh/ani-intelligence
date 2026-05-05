@@ -3,7 +3,7 @@
  * AI 可以通过此工具向用户提出问题并获取回答
  */
 
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
 // 全局回调队列 - 用于从 App.tsx 传递 showQuestionDialog 函数
@@ -22,7 +22,7 @@ export function setQuestionDialogCallback(
   showQuestionDialogCallback = callback;
 }
 
-export const askUserTool: AliceTool = {
+export const askUserTool: AniTool = {
   name: 'ask_user',
   aliases: ['askuser'],
   label: '向用户提问',

@@ -5,7 +5,7 @@
 
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
 
 type EditAction = 'replace-lines' | 'insert-after' | 'delete-lines';
@@ -82,7 +82,7 @@ function applyEdits(lines: string[], edits: SingleEdit[]): string[] {
   return result;
 }
 
-export const editFileTool: AliceTool = {
+export const editFileTool: AniTool = {
   name: 'editFile',
   label: '按行号编辑文件',
   description: `按行号对已有文件进行替换、插入或删除行，支持一次调用内批量执行多个编辑。行号从 1 开始且含首尾（inclusive）。适用于大文件中少量修改，避免整文件重写。

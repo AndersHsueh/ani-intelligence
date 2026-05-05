@@ -17,7 +17,7 @@ export class ChannelWorkspaceBackend implements WorkspaceBackend {
   readonly kind = 'channel' as const;
 
   async resolveWorkspacePath(input: ChannelWorkspaceInput): Promise<string> {
-    const base = path.join(os.homedir(), '.alice', 'channel-workspaces', input.channel);
+    const base = path.join(os.homedir(), '.ani', 'channel-workspaces', input.channel);
     const workspace = path.join(base, sanitizeChatId(input.chatId));
     await fs.mkdir(workspace, { recursive: true });
     return workspace;

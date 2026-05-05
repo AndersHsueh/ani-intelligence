@@ -4,7 +4,7 @@
  * 会话内存储，不持久化
  */
 
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 
 /** 成功且带 todos 时附带给 UI 的展示数据，data 可带额外字段（如 added） */
 function withTodoDisplay<T extends { todos: TodoItem[] }>(data: T): { data: T; display: ToolResult['display'] } {
@@ -34,7 +34,7 @@ function nextId(): string {
 
 // ─── TodoWrite ────────────────────────────────────────────────────
 
-export const todoWriteTool: AliceTool = {
+export const todoWriteTool: AniTool = {
   name: 'TodoWrite',
   aliases: ['todowrite'],
   label: 'Todo',
@@ -136,7 +136,7 @@ Always use TodoWrite at the start of complex multi-step tasks. Mark tasks in_pro
 
 // ─── TodoRead ─────────────────────────────────────────────────────
 
-export const todoReadTool: AliceTool = {
+export const todoReadTool: AniTool = {
   name: 'TodoRead',
   aliases: ['todoread'],
   label: 'Todo 查看',

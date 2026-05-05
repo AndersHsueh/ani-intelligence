@@ -4,9 +4,9 @@
  * 内部使用，不产生外部副作用
  */
 
-import type { AliceTool, ToolResult } from '../../types/tool.js';
+import type { AniTool, ToolResult } from '../../types/tool.js';
 
-export const sequentialThinkingTool: AliceTool = {
+export const sequentialThinkingTool: AniTool = {
   name: 'SequentialThinking',
   label: '逐步推理',
   description: `A tool for dynamic, reflective step-by-step reasoning. Use this when facing complex problems that require careful analysis before acting.

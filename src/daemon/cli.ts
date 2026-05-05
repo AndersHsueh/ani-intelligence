@@ -49,7 +49,7 @@ function showBanner() {
 
   console.log(chalk.cyan(banner));
   console.log(chalk.gray('  - Verified Embedded Resilient Orchestration Neural Intelligent Control Agent'));
-  console.log(chalk.gray('  - Core component of Alice\n'));
+  console.log(chalk.gray('  - Core component of Ani\n'));
 }
 
 const program = new Command();
