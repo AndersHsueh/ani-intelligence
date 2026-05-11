@@ -17,22 +17,32 @@ bun run dev
 
 ```jsonc
 {
-  "default_model": "ollama",
+  "default_model": "local",
   "models": [
     {
-      "name": "ollama",
-      "provider": "ollama",
-      "baseURL": "http://localhost:11434/v1",
+      "name": "local",
+      "provider": "custom",
+      "baseURL": "http://localhost:8000/v1",
       "model": "qwen3",
-      "apiKey": "ollama",
+      "apiKey": "sk-1234",
       "temperature": 0.7,
-      "maxTokens": 8192
+      "maxTokens": 16384,
+      "constitution": "mini"   // "full"（默认）或 "mini"（本地小模型推荐）
     }
   ],
   "workspace": "/your/project",
   "maxIterations": 15
 }
 ```
+
+### `constitution` 字段
+
+| 值 | 说明 | 适用场景 |
+|---|---|---|
+| `"full"`（默认） | 完整宪法 ~7300 tokens | 云端大模型（Claude、GPT-4） |
+| `"mini"` | 精简宪法 ~600 tokens | 本地小模型（ollama、omlx 等） |
+
+本地模型推荐使用 `"mini"`，可显著减少 system prompt 占用，提升工具调用可靠性。
 
 ### 支持的 Provider
 
@@ -95,6 +105,7 @@ index.tsx (Ink/React TUI)
 | v0.2.0 | Phase 1：Onboarding 流程、Skills 能力 |
 | v0.3.0 | 4 层提示词架构（Constitution + System + Skills + Agent Context） |
 | v0.4.0 | 接口边界提取：SessionStore / IToolExecutor / BaseProvider，会话持久化 |
+| v0.4.1 | 修复工具注册和 execute 签名 bug，新增精简宪法（mini），工具路径解析重构 |
 
 ## 扩展开发
 
