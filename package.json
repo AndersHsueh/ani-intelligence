@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "bun run src/index.tsx"
   },
+  "bin": {
+    "ani": "./src/index.tsx"
+  },
   "keywords": ["cli", "ai", "assistant", "terminal"],
   "author": "Anders",
   "license": "MIT",
