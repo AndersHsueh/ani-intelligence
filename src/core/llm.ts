@@ -10,7 +10,7 @@ import { constitution } from '../aniConstitution.js';
 import { ToolExecutor } from '../tools/executor.js';
 import { toolRegistry } from '../tools/registry.js';
 import type { Message, ModelConfig } from '../types/index.js';
-import type { ToolCallRecord, ToolExecutionContext } from '../types/tool.js';
+import type { IToolExecutor, ToolCallRecord, ToolExecutionContext } from '../types/tool.js';
 import { getErrorMessage } from '../utils/error.js';
 import { skillManager } from './skillManager.js';
 
@@ -32,7 +32,7 @@ export class LLMClient {
   private modelConfig: ModelConfig;
   private systemPrompt: string;
   private maxIterations: number;
-  private toolExecutor: ToolExecutor;
+  private toolExecutor: IToolExecutor;
 
   constructor(modelConfig: ModelConfig, options?: LLMClientOptions) {
     this.modelConfig = modelConfig;

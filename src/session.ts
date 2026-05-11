@@ -1,37 +1,25 @@
-/**
- * Ani Session - in-memory session management
- */
-import type { Session, Message } from '../../types/index.js';
+import { FileSessionStore } from './session/file.js';
+import type { SessionStore, Message } from './types/index.js';
 
-let currentSession: Session | null = null;
+// Exported so tests can swap in MemorySessionStore without touching disk.
+export let sessionStore: SessionStore = new FileSessionStore();
 
-export function createSession(workspace: string): Session {
-  currentSession = {
-    id: `ani-${Date.now()}`,
-    createdAt: new Date(),
-    workspace,
-    messages: [],
-    metadata: {},
-  };
-  return currentSession;
+export function createSession(workspace: string) {
+  return sessionStore.createSession(workspace);
 }
 
-export function getSession(): Session | null {
-  return currentSession;
+export function getSession() {
+  return sessionStore.getSession();
 }
 
 export function addMessage(msg: Message): void {
-  if (currentSession) {
-    currentSession.messages.push(msg);
-  }
+  sessionStore.addMessage(msg);
 }
 
-export function getMessages(): Message[] {
-  return currentSession?.messages ?? [];
+export function getMessages() {
+  return sessionStore.getMessages();
 }
 
 export function setMessages(msgs: Message[]): void {
-  if (currentSession) {
-    currentSession.messages = [...msgs];
-  }
+  sessionStore.setMessages(msgs);
 }

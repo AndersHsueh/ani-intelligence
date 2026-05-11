@@ -2,6 +2,22 @@
  * Ani 工具系统类型定义
  */
 
+export interface IToolExecutor {
+  execute(
+    toolCall: ToolCall,
+    onUpdate?: (record: ToolCallRecord) => void,
+    context?: ToolExecutionContext
+  ): Promise<ToolResult>;
+  executeAll(
+    toolCalls: ToolCall[],
+    onUpdate?: (record: ToolCallRecord) => void,
+    context?: ToolExecutionContext
+  ): Promise<ToolResult[]>;
+  cancel(toolCallId: string): void;
+  cancelAll(): void;
+  setConfirmHandler(handler: (message: string, command: string) => Promise<boolean>): void;
+}
+
 export interface ToolParameter {
   type: string;
   description?: string;

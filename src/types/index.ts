@@ -54,3 +54,19 @@ export interface Config {
 }
 
 export * from './tool.js';
+
+export interface SessionMeta {
+  id: string;
+  createdAt: Date;
+  workspace: string;
+  caption?: string;
+}
+
+export interface SessionStore {
+  createSession(workspace: string): Session;
+  getSession(): Session | null;
+  addMessage(msg: Message): void;
+  getMessages(): Message[];
+  setMessages(msgs: Message[]): void;
+  listSessions(): SessionMeta[];
+}

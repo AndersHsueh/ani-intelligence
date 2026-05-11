@@ -1,10 +1,10 @@
-import type { AniTool, ToolCall, ToolCallRecord, ToolResult, ToolExecutionContext } from '../types/tool.js';
+import type { IToolExecutor, AniTool, ToolCall, ToolCallRecord, ToolResult, ToolExecutionContext } from '../types/tool.js';
 import type { Config } from '../types/index.js';
 import { toolRegistry } from './registry.js';
 import { isDangerousCommand } from './builtin/executeCommand.js';
 import { getErrorMessage } from '../utils/error.js';
 
-export class ToolExecutor {
+export class ToolExecutor implements IToolExecutor {
   private config: Config;
   private abortControllers: Map<string, AbortController> = new Map();
   private onConfirm?: (message: string, command: string) => Promise<boolean>;
