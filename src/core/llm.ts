@@ -42,7 +42,7 @@ export class LLMClient {
 
   private loadSystemPrompt(customPath?: string): string {
     const projectRoot = path.join(__dirname, '..', '..');
-    const promptPath = customPath ?? path.join(projectRoot, 'prompt', 'default.md');
+    const promptPath = customPath ?? path.join(projectRoot, 'prompts', 'default.md');
     try {
       return readFileSync(promptPath, 'utf-8');
     } catch {
