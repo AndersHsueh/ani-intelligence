@@ -6,6 +6,7 @@ import { writeFile as fsWriteFile, mkdir } from 'fs/promises';
 import path from 'path';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 export const writeFileTool: AniTool = {
   name: 'writeFile',
@@ -33,8 +34,7 @@ export const writeFileTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { path: filePath, content, encoding = 'utf-8' } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(base, filePath);
+    const resolvedPath = resolveFromContext(filePath, context);
 
     try {
       const dir = path.dirname(resolvedPath);

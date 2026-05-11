@@ -2,10 +2,10 @@
  * 文件系统工具：读取文件
  */
 
-import path from 'path';
 import { readFile as fsReadFile } from 'fs/promises';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 export const readFileTool: AniTool = {
   name: 'readFile',
@@ -29,8 +29,7 @@ export const readFileTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { path: filePath, encoding = 'utf-8' } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(base, filePath);
+    const resolvedPath = resolveFromContext(filePath, context);
 
     try {
       const content = await fsReadFile(resolvedPath, encoding as BufferEncoding);

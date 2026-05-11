@@ -2,10 +2,10 @@
  * 工作区工具：获取 Git 信息
  */
 
-import path from 'path';
 import simpleGit from 'simple-git';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 export const getGitInfoTool: AniTool = {
   name: 'getGitInfo',
@@ -24,8 +24,7 @@ export const getGitInfoTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { directory = '.' } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedDir = path.isAbsolute(directory) ? directory : path.resolve(base, directory);
+    const resolvedDir = resolveFromContext(directory, context);
 
     try {
       const git = simpleGit(resolvedDir);

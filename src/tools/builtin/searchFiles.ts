@@ -2,10 +2,10 @@
  * 文件系统工具：搜索文件
  */
 
-import path from 'path';
 import { glob } from 'glob';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 export const searchFilesTool: AniTool = {
   name: 'searchFiles',
@@ -39,8 +39,7 @@ export const searchFilesTool: AniTool = {
       directory = '.',
       ignore = ['**/node_modules/**', '**/.git/**', '**/dist/**']
     } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedDir = path.isAbsolute(directory) ? directory : path.resolve(base, directory);
+    const resolvedDir = resolveFromContext(directory, context);
 
     try {
       const files = await glob(pattern, { cwd: resolvedDir, ignore, nodir: true });

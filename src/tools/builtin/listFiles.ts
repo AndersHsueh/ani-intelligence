@@ -3,9 +3,10 @@
  */
 
 import { readdir, stat } from 'fs/promises';
-import { join, resolve, isAbsolute } from 'path';
+import { join } from 'path';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 export const listFilesTool: AniTool = {
   name: 'listFiles',
@@ -28,32 +29,27 @@ export const listFilesTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { directory = '.', detailed = false } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedDir = isAbsolute(directory) ? directory : resolve(base, directory);
+    const resolvedDir = resolveFromContext(directory, context);
 
     try {
       const entries = await readdir(resolvedDir, { withFileTypes: true });
-      const files = [];
 
-      for (const entry of entries) {
-        const fullPath = join(resolvedDir, entry.name);
+      const files = await Promise.all(entries.map(async entry => {
         const item: any = {
           name: entry.name,
-          type: entry.isDirectory() ? 'directory' : 'file'
+          type: entry.isDirectory() ? 'directory' : 'file',
         };
-
         if (detailed) {
           try {
-            const stats = await stat(fullPath);
-            item.size = stats.size;
-            item.modified = stats.mtime;
+            const s = await stat(join(resolvedDir, entry.name));
+            item.size = s.size;
+            item.modified = s.mtime;
           } catch {
             // 忽略无法访问的文件
           }
         }
-
-        files.push(item);
-      }
+        return item;
+      }));
 
       return {
         success: true,

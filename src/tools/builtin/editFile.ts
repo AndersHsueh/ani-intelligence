@@ -7,6 +7,7 @@ import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import type { AniTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { resolveFromContext } from '../utils.js';
 
 type EditAction = 'replace-lines' | 'insert-after' | 'delete-lines';
 
@@ -138,8 +139,7 @@ export const editFileTool: AniTool = {
 
   async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { path: filePath, edits, encoding = 'utf-8' } = params;
-    const base = context?.workspace ?? process.cwd();
-    const resolvedPath = path.isAbsolute(filePath) ? path.resolve(filePath) : path.resolve(base, filePath);
+    const resolvedPath = resolveFromContext(filePath, context);
 
     if (!Array.isArray(edits) || edits.length === 0) {
       return {
