@@ -7,6 +7,10 @@ import React from 'react';
 // @ts-ignore
 import { render } from 'ink';
 import { configManager } from './aniConfig.js';
+import { toolRegistry } from './tools/registry.js';
+import { builtinTools } from './tools/builtin/index.js';
+
+toolRegistry.registerAll(builtinTools);
 
 async function startTUI(): Promise<void> {
   const { Config } = await import('./shim/qwen-code-core.js');

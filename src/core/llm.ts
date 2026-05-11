@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { ProviderFactory, type BaseProvider } from './providers/index.js';
 import { configManager } from '../aniConfig.js';
-import { constitution } from '../aniConstitution.js';
+import { constitution, constitutionMini } from '../aniConstitution.js';
 import { ToolExecutor } from '../tools/executor.js';
 import { toolRegistry } from '../tools/registry.js';
 import type { Message, ModelConfig } from '../types/index.js';
@@ -80,11 +80,9 @@ export class LLMClient {
   }
 
   private buildSystemPrompt(workspace: string, skillsSummary: string): string {
-    // Layer 1: Constitution (always first, never compressed)
-    // Layer 2: System prompt (describes Ani's capabilities)
-    // Layer 3: Skills/MCP (available tools)
+    const constitutionText = this.modelConfig.constitution === 'mini' ? constitutionMini : constitution;
     const layers123 =
-      `${constitution}\n\n${this.systemPrompt}${skillsSummary ? '\n\n' + skillsSummary : ''}`;
+      `${constitutionText}\n\n${this.systemPrompt}${skillsSummary ? '\n\n' + skillsSummary : ''}`;
 
     // Layer 4a: Agent context (CLAUDE.md in workspace)
     const agentPrompt = this.loadAgentPrompt(workspace);

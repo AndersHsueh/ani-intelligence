@@ -42,6 +42,7 @@ export interface ModelConfig {
   last_update_datetime: string | null;
   speed: number | null;
   promptCaching?: boolean;
+  constitution?: 'full' | 'mini';
   notes?: string;
 }
 
