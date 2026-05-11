@@ -1,11 +1,12 @@
 /**
  * Ani LLM Client - single-process dialogue loop with tool calling
  */
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ProviderFactory, type BaseProvider } from './providers/index.js';
 import { configManager } from '../aniConfig.js';
+import { constitution } from '../aniConstitution.js';
 import { ToolExecutor } from '../tools/executor.js';
 import { toolRegistry } from '../tools/registry.js';
 import type { Message, ModelConfig } from '../types/index.js';
@@ -50,15 +51,60 @@ export class LLMClient {
     }
   }
 
+  private loadAgentPrompt(workspace: string): string {
+    const agentPath = path.join(workspace, 'CLAUDE.md');
+    if (!existsSync(agentPath)) return '';
+    try {
+      return readFileSync(agentPath, 'utf-8');
+    } catch {
+      return '';
+    }
+  }
+
+  private compressMessages(messages: Message[], maxTokens: number = 16000): Message[] {
+    const ESTIMATED_TOKENS_PER_CHAR = 0.25;
+    const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
+    const estimatedTokens = totalChars * ESTIMATED_TOKENS_PER_CHAR;
+
+    if (estimatedTokens <= maxTokens) return messages;
+
+    const lastMessages = messages.slice(-20);
+    const olderMessages = messages.slice(0, -20);
+
+    const summary = `[Prior conversation summarized: ${olderMessages.length} messages omitted. Key topics covered in prior conversation.]`;
+
+    return [
+      { role: 'user', content: summary, timestamp: new Date() },
+      ...lastMessages,
+    ];
+  }
+
+  private buildSystemPrompt(workspace: string, skillsSummary: string): string {
+    // Layer 1: Constitution (always first, never compressed)
+    // Layer 2: System prompt (describes Ani's capabilities)
+    // Layer 3: Skills/MCP (available tools)
+    const layers123 =
+      `${constitution}\n\n${this.systemPrompt}${skillsSummary ? '\n\n' + skillsSummary : ''}`;
+
+    // Layer 4a: Agent context (CLAUDE.md in workspace)
+    const agentPrompt = this.loadAgentPrompt(workspace);
+    const agentLayer = agentPrompt ? '\n\n---\n\n## Agent Context\n\n' + agentPrompt : '';
+
+    return layers123 + agentLayer;
+  }
+
   async *chatStream(
     messages: Message[],
     workspace: string,
   ): AsyncGenerator<StreamEvent> {
     await skillManager.discover();
     const skillsSummary = skillManager.buildSkillsSummary();
-    const systemPromptWithCwd =
-      `${this.systemPrompt}\n\n## 运行环境\n\n当前工作目录：${workspace}` +
-      (skillsSummary ? '\n\n' + skillsSummary : '');
+
+    // Build system prompt with 4-layer structure
+    // Layers 1-3: Constitution + System prompt + Skills (never compressed)
+    // Layer 4a: Agent context from CLAUDE.md (never compressed)
+    const systemPromptWithContext = this.buildSystemPrompt(workspace, skillsSummary);
+
     const provider = ProviderFactory.create(
       this.modelConfig.provider,
       {
@@ -69,11 +115,11 @@ export class LLMClient {
         maxTokens: this.modelConfig.maxTokens,
         promptCaching: this.modelConfig.promptCaching,
       },
-      systemPromptWithCwd,
+      systemPromptWithContext,
     );
 
-    // Build conversation messages (system prompt is handled by provider)
-    const conversation: Message[] = [...messages];
+    // Layer 4b: User conversation history (compressed if too long)
+    const conversation: Message[] = this.compressMessages([...messages]);
     const tools = toolRegistry.toOpenAIFunctions();
     const context: ToolExecutionContext = { workspace };
 
