@@ -1,16 +1,11 @@
 import type { Session, Message, SessionStore, SessionMeta } from '../types/index.js';
+import { makeSession, toSessionMeta } from './utils.js';
 
 export class MemorySessionStore implements SessionStore {
   private currentSession: Session | null = null;
 
   createSession(workspace: string): Session {
-    this.currentSession = {
-      id: `ani-${Date.now()}`,
-      createdAt: new Date(),
-      workspace,
-      messages: [],
-      metadata: {},
-    };
+    this.currentSession = makeSession(workspace);
     return this.currentSession;
   }
 
@@ -21,6 +16,7 @@ export class MemorySessionStore implements SessionStore {
   addMessage(msg: Message): void {
     if (this.currentSession) {
       this.currentSession.messages.push(msg);
+      this.currentSession.updatedAt = new Date();
     }
   }
 
@@ -31,16 +27,12 @@ export class MemorySessionStore implements SessionStore {
   setMessages(msgs: Message[]): void {
     if (this.currentSession) {
       this.currentSession.messages = [...msgs];
+      this.currentSession.updatedAt = new Date();
     }
   }
 
   listSessions(): SessionMeta[] {
     if (!this.currentSession) return [];
-    return [{
-      id: this.currentSession.id,
-      createdAt: this.currentSession.createdAt,
-      workspace: this.currentSession.workspace,
-      caption: this.currentSession.caption,
-    }];
+    return [toSessionMeta(this.currentSession)];
   }
 }

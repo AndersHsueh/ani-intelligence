@@ -1,27 +1,20 @@
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs';
 import path from 'path';
-import os from 'os';
 import type { Session, Message, SessionStore, SessionMeta } from '../types/index.js';
+import { configManager } from '../aniConfig.js';
+import { makeSession, toSessionMeta } from './utils.js';
 
 export class FileSessionStore implements SessionStore {
   private sessionsDir: string;
   private currentSession: Session | null = null;
 
   constructor(sessionsDir?: string) {
-    this.sessionsDir = sessionsDir ?? path.join(os.homedir(), '.ani', 'sessions');
-    if (!existsSync(this.sessionsDir)) {
-      mkdirSync(this.sessionsDir, { recursive: true });
-    }
+    this.sessionsDir = sessionsDir ?? path.join(configManager.getConfigDir(), 'sessions');
+    mkdirSync(this.sessionsDir, { recursive: true });
   }
 
   createSession(workspace: string): Session {
-    this.currentSession = {
-      id: `ani-${Date.now()}`,
-      createdAt: new Date(),
-      workspace,
-      messages: [],
-      metadata: {},
-    };
+    this.currentSession = makeSession(workspace);
     this.persist();
     return this.currentSession;
   }
@@ -56,14 +49,8 @@ export class FileSessionStore implements SessionStore {
       for (const f of readdirSync(this.sessionsDir)) {
         if (!f.endsWith('.json')) continue;
         try {
-          const raw = readFileSync(path.join(this.sessionsDir, f), 'utf-8');
-          const s = JSON.parse(raw) as Session;
-          results.push({
-            id: s.id,
-            createdAt: new Date(s.createdAt),
-            workspace: s.workspace,
-            caption: s.caption,
-          });
+          const s = JSON.parse(readFileSync(path.join(this.sessionsDir, f), 'utf-8')) as Session;
+          results.push({ ...toSessionMeta(s), createdAt: new Date(s.createdAt) });
         } catch {
           // skip corrupt files
         }
@@ -76,7 +63,10 @@ export class FileSessionStore implements SessionStore {
 
   private persist(): void {
     if (!this.currentSession) return;
-    const filePath = path.join(this.sessionsDir, `${this.currentSession.id}.json`);
-    writeFileSync(filePath, JSON.stringify(this.currentSession, null, 2), 'utf-8');
+    writeFileSync(
+      path.join(this.sessionsDir, `${this.currentSession.id}.json`),
+      JSON.stringify(this.currentSession),
+      'utf-8',
+    );
   }
 }
