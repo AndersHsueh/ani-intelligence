@@ -22,34 +22,16 @@ export const getGitInfoTool: AniTool = {
     required: []
   },
 
-  async execute(toolCallId, params, signal, onUpdate, context): Promise<ToolResult> {
+  async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { directory = '.' } = params;
     const base = context?.workspace ?? process.cwd();
     const resolvedDir = path.isAbsolute(directory) ? directory : path.resolve(base, directory);
 
     try {
-      onUpdate?.({
-        success: true,
-        status: '正在获取 Git 信息...',
-        progress: 0
-      });
-
       const git = simpleGit(resolvedDir);
-
-      // 检查是否是 Git 仓库
-      const isRepo = await git.checkIsRepo();
-      if (!isRepo) {
-        return {
-          success: false,
-          error: '当前目录不是 Git 仓库'
-        };
+      if (!await git.checkIsRepo()) {
+        return { success: false, error: '当前目录不是 Git 仓库' };
       }
-
-      onUpdate?.({
-        success: true,
-        status: '正在读取分支信息...',
-        progress: 30
-      });
 
       const [branch, status, remotes, log] = await Promise.all([
         git.branch(),
@@ -57,12 +39,6 @@ export const getGitInfoTool: AniTool = {
         git.getRemotes(true),
         git.log({ maxCount: 5 })
       ]);
-
-      onUpdate?.({
-        success: true,
-        status: 'Git 信息获取成功',
-        progress: 100
-      });
 
       return {
         success: true,

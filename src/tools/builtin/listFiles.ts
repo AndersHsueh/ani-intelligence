@@ -26,22 +26,14 @@ export const listFilesTool: AniTool = {
     required: []
   },
 
-  async execute(toolCallId, params, signal, onUpdate, context): Promise<ToolResult> {
+  async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { directory = '.', detailed = false } = params;
     const base = context?.workspace ?? process.cwd();
     const resolvedDir = isAbsolute(directory) ? directory : resolve(base, directory);
 
     try {
-      onUpdate?.({
-        success: true,
-        status: `正在扫描目录 ${resolvedDir}...`,
-        progress: 0
-      });
-
       const entries = await readdir(resolvedDir, { withFileTypes: true });
-      
       const files = [];
-      let processed = 0;
 
       for (const entry of entries) {
         const fullPath = join(resolvedDir, entry.name);
@@ -55,19 +47,12 @@ export const listFilesTool: AniTool = {
             const stats = await stat(fullPath);
             item.size = stats.size;
             item.modified = stats.mtime;
-          } catch (e) {
+          } catch {
             // 忽略无法访问的文件
           }
         }
 
         files.push(item);
-        
-        processed++;
-        onUpdate?.({
-          success: true,
-          status: `扫描中... (${processed}/${entries.length})`,
-          progress: Math.floor((processed / entries.length) * 100)
-        });
       }
 
       return {

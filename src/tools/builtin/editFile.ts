@@ -136,7 +136,7 @@ export const editFileTool: AniTool = {
     required: ['path', 'edits']
   },
 
-  async execute(toolCallId, params, signal, onUpdate, context): Promise<ToolResult> {
+  async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { path: filePath, edits, encoding = 'utf-8' } = params;
     const base = context?.workspace ?? process.cwd();
     const resolvedPath = path.isAbsolute(filePath) ? path.resolve(filePath) : path.resolve(base, filePath);
@@ -149,19 +149,8 @@ export const editFileTool: AniTool = {
     }
 
     try {
-      onUpdate?.({
-        success: true,
-        status: `正在读取文件 ${resolvedPath}...`,
-        progress: 0
-      });
       const raw = await readFile(resolvedPath, encoding as BufferEncoding);
       const lines = raw.split(/\r?\n/);
-
-      onUpdate?.({
-        success: true,
-        status: `正在应用 ${edits.length} 处编辑...`,
-        progress: 50
-      });
 
       const normalized: SingleEdit[] = edits.map((e: any) => {
         if (e.action === 'replace-lines') {
@@ -190,12 +179,6 @@ export const editFileTool: AniTool = {
       const newContent = newLines.join(lineEnding);
 
       await writeFile(resolvedPath, newContent, encoding as BufferEncoding);
-
-      onUpdate?.({
-        success: true,
-        status: `已应用 ${edits.length} 处编辑`,
-        progress: 100
-      });
 
       return {
         success: true,

@@ -21,34 +21,15 @@ export const loadSkillTool: AniTool = {
     required: ['skillName']
   },
 
-  async execute(toolCallId, params, signal, onUpdate): Promise<ToolResult> {
+  async execute(toolCallId, params, signal): Promise<ToolResult> {
     const { skillName } = params;
-
-    onUpdate?.({
-      success: true,
-      status: `加载技能 ${skillName}...`,
-      progress: 0
-    });
-
     const content = await skillManager.loadSkill(skillName);
 
     if (!content) {
       const available = skillManager.getSkills().map(s => s.name).join(', ');
-      return {
-        success: false,
-        error: `技能 "${skillName}" 未找到。可用技能: ${available || '无'}`
-      };
+      return { success: false, error: `技能 "${skillName}" 未找到。可用技能: ${available || '无'}` };
     }
 
-    onUpdate?.({
-      success: true,
-      status: `技能 ${skillName} 已加载`,
-      progress: 100
-    });
-
-    return {
-      success: true,
-      data: content
-    };
+    return { success: true, data: content };
   }
 };

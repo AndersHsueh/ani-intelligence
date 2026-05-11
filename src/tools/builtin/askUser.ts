@@ -47,77 +47,29 @@ export const askUserTool: AniTool = {
     required: ['question']
   },
 
-  async execute(toolCallId, params, signal, onUpdate): Promise<ToolResult> {
+  async execute(toolCallId, params, signal): Promise<ToolResult> {
     try {
       const question = params.question as string;
       const choices = (params.choices as string[]) || [];
-      const allowFreeform = params.allow_freeform !== false; // 默认true
+      const allowFreeform = params.allow_freeform !== false;
 
       if (!question || question.trim() === '') {
-        return {
-          success: false,
-          error: '问题不能为空'
-        };
+        return { success: false, error: '问题不能为空' };
       }
 
-      // 检查回调是否已设置
       if (!showQuestionDialogCallback) {
-        return {
-          success: false,
-          error: 'Question dialog not initialized. This is an internal error.'
-        };
+        return { success: false, error: 'Question dialog not initialized. This is an internal error.' };
       }
 
-      // 报告等待用户输入
-      onUpdate?.({
-        success: true,
-        status: '等待用户回答...',
-        progress: 0
-      });
-
-      // 显示问题对话框并等待用户回答
       const answer = await showQuestionDialogCallback(question, choices, allowFreeform);
 
-      // 用户取消（按了Esc且没有输入）
       if (!answer || answer.trim() === '') {
-        onUpdate?.({
-          success: false,
-          error: '用户取消了回答',
-          progress: 0
-        });
-
-        return {
-          success: false,
-          error: '用户取消了回答'
-        };
+        return { success: false, error: '用户取消了回答' };
       }
 
-      // 报告完成
-      onUpdate?.({
-        success: true,
-        status: '用户已回答',
-        progress: 100
-      });
-
-      return {
-        success: true,
-        data: {
-          question,
-          answer: answer.trim()
-        }
-      };
+      return { success: true, data: { question, answer: answer.trim() } };
     } catch (error: unknown) {
-      const msg = getErrorMessage(error);
-      onUpdate?.({
-        success: false,
-        error: `提问失败: ${msg}`,
-        progress: 0
-      });
-
-      return {
-        success: false,
-        error: `提问失败: ${msg}`
-      };
+      return { success: false, error: `提问失败: ${getErrorMessage(error)}` };
     }
   }
 };

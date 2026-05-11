@@ -15,24 +15,9 @@ export const getCurrentDateTimeTool: AniTool = {
     required: []
   },
 
-  async execute(toolCallId, params, signal, onUpdate): Promise<ToolResult> {
+  async execute(toolCallId, params, signal): Promise<ToolResult> {
     try {
-      // 报告开始
-      onUpdate?.({
-        success: true,
-        status: '获取系统时间...',
-        progress: 0
-      });
-
       const now = new Date();
-
-      // 报告完成
-      onUpdate?.({
-        success: true,
-        status: '时间获取完成',
-        progress: 100
-      });
-
       return {
         success: true,
         data: {
@@ -55,16 +40,7 @@ export const getCurrentDateTimeTool: AniTool = {
         }
       };
     } catch (error: unknown) {
-      onUpdate?.({
-        success: false,
-        error: `获取时间失败: ${getErrorMessage(error)}`,
-        progress: 0
-      });
-
-      return {
-        success: false,
-        error: `获取时间失败: ${getErrorMessage(error)}`
-      };
+      return { success: false, error: `获取时间失败: ${getErrorMessage(error)}` };
     }
   }
 };

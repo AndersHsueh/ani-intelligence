@@ -33,33 +33,17 @@ export const searchFilesTool: AniTool = {
     required: ['pattern']
   },
 
-  async execute(toolCallId, params, signal, onUpdate, context): Promise<ToolResult> {
-    const { 
-      pattern, 
-      directory = '.', 
-      ignore = ['**/node_modules/**', '**/.git/**', '**/dist/**'] 
+  async execute(toolCallId, params, signal, context): Promise<ToolResult> {
+    const {
+      pattern,
+      directory = '.',
+      ignore = ['**/node_modules/**', '**/.git/**', '**/dist/**']
     } = params;
     const base = context?.workspace ?? process.cwd();
     const resolvedDir = path.isAbsolute(directory) ? directory : path.resolve(base, directory);
 
     try {
-      onUpdate?.({
-        success: true,
-        status: `正在搜索 ${pattern}...`,
-        progress: 0
-      });
-
-      const files = await glob(pattern, {
-        cwd: resolvedDir,
-        ignore,
-        nodir: true
-      });
-
-      onUpdate?.({
-        success: true,
-        status: `找到 ${files.length} 个文件`,
-        progress: 100
-      });
+      const files = await glob(pattern, { cwd: resolvedDir, ignore, nodir: true });
 
       return {
         success: true,

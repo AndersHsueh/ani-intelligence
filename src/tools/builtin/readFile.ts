@@ -27,26 +27,14 @@ export const readFileTool: AniTool = {
     required: ['path']
   },
 
-  async execute(toolCallId, params, signal, onUpdate, context): Promise<ToolResult> {
+  async execute(toolCallId, params, signal, context): Promise<ToolResult> {
     const { path: filePath, encoding = 'utf-8' } = params;
     const base = context?.workspace ?? process.cwd();
     const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(base, filePath);
 
     try {
-      onUpdate?.({
-        success: true,
-        status: `正在读取文件 ${resolvedPath}...`,
-        progress: 0
-      });
-
       const content = await fsReadFile(resolvedPath, encoding as BufferEncoding);
       const size = Buffer.byteLength(content, encoding as BufferEncoding);
-
-      onUpdate?.({
-        success: true,
-        status: `文件读取成功 (${size} bytes)`,
-        progress: 100
-      });
 
       return {
         success: true,
