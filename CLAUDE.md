@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Ani** is a single-process terminal AI assistant — a minimalist rewrite of ALICE (described in `alice1.md`). The original ALICE had a dual-process architecture (CLI + daemon over HTTP). Ani runs everything in one Bun process.
 
+## Context file
+
+Ani uses `agent.md` (not `GEMINI.md`) as the project context file. The `/init` command analyzes the project and creates/updates this file. The filename is controlled by `ANI_CONTEXT_FILENAME` in `src/shim/qwen-code-core.ts`.
+
 ## Run
 
 ```bash
@@ -73,3 +77,26 @@ index.tsx (Ink render, provider tree)
 - `models[]` — array of `{ name, provider, baseURL, model, apiKey, temperature, maxTokens }`
 - `workspace` — working directory
 - `maxIterations` — max tool-calling loop iterations (default 15)
+
+## Slash Commands
+
+Built-in slash commands (defined in `src/ui/commands/`):
+- `/init` — analyze project and create `agent.md`
+- `/clear`, `/new`, `/reset` — clear conversation and start new session
+- `/quit`, `/exit`, `/bye` — exit the application
+- `/help`, `/?` — show help
+- `/model` — model selection
+- `/theme` — theme selection
+- `/settings` — open settings
+- `/memory` — memory management
+- And many more...
+
+Command aliases are defined via `altNames` array in each command's `SlashCommand` object.
+
+## Testing
+
+Test utilities are in `src/test-utils/`:
+- `mockCommandContext.ts` — `createMockCommandContext()` for command tests
+- `render.tsx` — `renderWithProviders()` for Ink component tests
+
+Run tests: `npx vitest run`
