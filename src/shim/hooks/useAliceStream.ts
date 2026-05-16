@@ -4,6 +4,7 @@
  */
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import type { ThoughtSummary, Config } from '../qwen-code-core.js';
+import { getErrorMessage } from '../qwen-code-core.js';
 import {
   StreamingState,
   ToolCallStatus,
@@ -19,6 +20,9 @@ import { configManager } from '../../aniConfig.js';
 import { createSession, getSession, addMessage, getMessages, setMessages } from '../../session.js';
 import { detectStartupMode, getSystemPromptPath } from '../../onboarding/index.js';
 import { InboxWatcher, type InboxSignal } from '../../ani/inboxWatcher.js';
+import { isAtCommand } from '../../ui/utils/commandUtils.js';
+import { expandAtCommands } from '../atExpander.js';
+import * as path from 'node:path';
 
 interface TrackedToolCall {
   callId: string;
@@ -127,8 +131,35 @@ export const useAliceStream = (
       // Create session once per app lifetime
       if (!getSession()) createSession(workspace);
 
-      // Add user message to session history
-      addMessage({ role: 'user', content: prompt, timestamp: new Date() });
+      // UI shows the user's original prompt; the LLM sees the @-expanded version.
+      let promptForLLM = prompt;
+      if (isAtCommand(prompt)) {
+        try {
+          const { expandedPrompt, readPaths } = await expandAtCommands(prompt, workspace);
+          promptForLLM = expandedPrompt;
+          if (readPaths.length > 0) {
+            const toolDisplays: IndividualToolCallDisplay[] = readPaths.map((p, idx) => ({
+              callId: `at-read-${timestamp}-${idx}`,
+              name: 'Read File',
+              description: `Read ${path.relative(workspace, p) || p}`,
+              status: ToolCallStatus.Success,
+              resultDisplay: undefined,
+              confirmationDetails: undefined,
+            }));
+            addItem(
+              { type: 'tool_group', tools: toolDisplays } as Omit<HistoryItem, 'id'>,
+              timestamp,
+            );
+          }
+        } catch (e: unknown) {
+          addItem(
+            { type: 'info', text: `@ expansion failed: ${getErrorMessage(e)}` } as Omit<HistoryItem, 'id'>,
+            timestamp,
+          );
+        }
+      }
+
+      addMessage({ role: 'user', content: promptForLLM, timestamp: new Date() });
 
       // Detect onboarding mode
       const mode = detectStartupMode();

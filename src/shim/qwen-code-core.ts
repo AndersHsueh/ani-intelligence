@@ -3,9 +3,14 @@
  * Provides type stubs and no-op implementations for Alice's daemon-based backend.
  */
 
+import * as fsPromises from 'node:fs/promises';
+import * as path from 'node:path';
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const QWEN_DIR = '.ani';
+
+const READ_MANY_FILES_MAX_BYTES = 200_000;
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -590,7 +595,9 @@ export class Config {
   }
   getResumedSessionData(): any { return null; }
   getIdeMode(): boolean { return false; }
-  getFileService(): any { return null; }
+  getFileService(): { shouldIgnoreFile: (_path: string, _opts?: any) => boolean } {
+    return { shouldIgnoreFile: () => false };
+  }
   getExtensionContextFilePaths(): string[] { return []; }
   getExtensionManager(): ExtensionManager { return new ExtensionManager(); }
   getExtensions(): Extension[] { return []; }
@@ -636,7 +643,9 @@ export class Config {
   getChatRecordingService(): any { return null; }
   getCliVersion(): string { return '0.0.0'; }
   getExcludedMcpServers(): string[] { return []; }
-  getFileFilteringOptions(): any { return {}; }
+  getFileFilteringOptions(): { respectGitIgnore: boolean; respectQwenIgnore: boolean } {
+    return { respectGitIgnore: false, respectQwenIgnore: false };
+  }
   getFolderTrust(): any { return null; }
   getHookSystem(): any { return null; }
   getOutputFormat(): any { return 'text'; }
@@ -881,13 +890,129 @@ export class MCPOAuthTokenStorage {
   deleteCredentials(_server: string): Promise<void> { return Promise.resolve(); }
 }
 
-export class FileSearch {
-  initialize(): Promise<void> { return Promise.resolve(); }
-  search(_query: string, _opts?: any): Promise<string[]> { return Promise.resolve([]); }
+// Always-skip directories. Tools without a real .gitignore reader can still
+// avoid the worst offenders. Callers may pass additional names via `ignoreDirs`.
+const ALWAYS_IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.next',
+  '.turbo',
+  '.cache',
+  '.venv',
+  '__pycache__',
+  'dist',
+  'build',
+  'out',
+  'coverage',
+]);
+
+const MAX_SCAN_ENTRIES = 50_000;
+
+// Effective options are projectRoot/ignoreDirs/enableRecursiveFileSearch.
+// Other upstream fields (useGitignore, enableFuzzySearch, cache, …) are
+// accepted via the index signature but ignored — the shim has no gitignore
+// reader or fuzzy index. See ALWAYS_IGNORED_DIRS for the static filter.
+export type FileSearchOptions = {
+  projectRoot?: string;
+  ignoreDirs?: string[];
+  enableRecursiveFileSearch?: boolean;
+} & Record<string, unknown>;
+
+export interface FileSearch {
+  initialize(): Promise<void>;
+  search(query: string, opts?: { maxResults?: number; signal?: AbortSignal }): Promise<string[]>;
+}
+
+class FileSearchImpl implements FileSearch {
+  private readonly rootDir: string;
+  private readonly ignoreDirs: Set<string>;
+  private readonly recursive: boolean;
+  private files: string[] | null = null;
+
+  constructor(opts: FileSearchOptions = {}) {
+    this.rootDir = (opts.projectRoot as string) || process.cwd();
+    this.ignoreDirs = new Set([...ALWAYS_IGNORED_DIRS, ...((opts.ignoreDirs as string[]) ?? [])]);
+    this.recursive = (opts.enableRecursiveFileSearch as boolean) ?? true;
+  }
+
+  async initialize(): Promise<void> {
+    if (this.files !== null) return;
+    this.files = [];
+    await this.scanDirectory(this.rootDir, '');
+  }
+
+  private async scanDirectory(dir: string, relativePath: string): Promise<void> {
+    if (this.files!.length >= MAX_SCAN_ENTRIES) return;
+
+    let entries;
+    try {
+      entries = await fsPromises.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      if (this.files!.length >= MAX_SCAN_ENTRIES) return;
+
+      const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+
+      if (entry.isDirectory()) {
+        if (this.ignoreDirs.has(entry.name)) continue;
+        this.files!.push(relPath + '/');
+        if (this.recursive) {
+          await this.scanDirectory(path.join(dir, entry.name), relPath);
+        }
+      } else if (entry.isFile()) {
+        this.files!.push(relPath);
+      }
+    }
+  }
+
+  static score(pattern: string, text: string): number {
+    const pat = pattern.toLowerCase();
+    const tex = text.toLowerCase();
+    if (tex === pat) return 100;
+    if (tex.startsWith(pat)) return 90;
+    const idx = tex.indexOf(pat);
+    if (idx === -1) return 0;
+    // Prefer matches in the basename over deep paths.
+    const baseIdx = tex.lastIndexOf('/');
+    return idx > baseIdx ? 70 : 50;
+  }
+
+  async search(
+    query: string,
+    opts?: { maxResults?: number; signal?: AbortSignal },
+  ): Promise<string[]> {
+    await this.initialize();
+    if (opts?.signal?.aborted) return [];
+
+    const maxResults = opts?.maxResults ?? 100;
+    const files = this.files!;
+
+    if (!query) {
+      const topLevel = new Set<string>();
+      for (const file of files) {
+        const slash = file.indexOf('/');
+        topLevel.add(slash === -1 ? file : file.substring(0, slash + 1));
+      }
+      return [...topLevel].sort().slice(0, maxResults);
+    }
+
+    const scored: Array<{ file: string; score: number }> = [];
+    for (const file of files) {
+      const score = FileSearchImpl.score(query, file);
+      if (score > 0) scored.push({ file, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, maxResults).map((r) => r.file);
+  }
 }
 
 export class FileSearchFactory {
-  static create(_opts?: any): FileSearch { return new FileSearch(); }
+  static create(opts: FileSearchOptions = {}): FileSearch {
+    return new FileSearchImpl(opts);
+  }
 }
 
 export class ExitPlanModeTool {
@@ -1534,15 +1659,67 @@ export function promptForSetting(_scope: any, _key: string, _value: string): Pro
 export async function read<T = string>(_path: string): Promise<T> {
   return '' as T;
 }
+type ReadManyFilesEntry =
+  | { kind: 'file'; spec: string; absPath: string; content: string }
+  | { kind: 'dir'; spec: string; absPath: string }
+  | null;
+
+function resolveWorkspace(workspaceOrConfig: unknown): string {
+  if (typeof workspaceOrConfig === 'string') return workspaceOrConfig;
+  const ctx = (workspaceOrConfig as { getWorkspaceContext?: () => { getDirectories?: () => string[] } })
+    ?.getWorkspaceContext?.();
+  return ctx?.getDirectories?.()[0] ?? process.cwd();
+}
+
+async function readOne(absPath: string, spec: string): Promise<ReadManyFilesEntry> {
+  try {
+    const content = await fsPromises.readFile(absPath, 'utf-8');
+    const truncated =
+      content.length > READ_MANY_FILES_MAX_BYTES
+        ? content.slice(0, READ_MANY_FILES_MAX_BYTES) +
+          `\n\n[... truncated, file is ${content.length} bytes ...]`
+        : content;
+    return { kind: 'file', spec, absPath, content: truncated };
+  } catch (e: unknown) {
+    const code = (e as NodeJS.ErrnoException)?.code;
+    if (code === 'EISDIR') return { kind: 'dir', spec, absPath };
+    return null;
+  }
+}
+
 export async function readManyFiles(
-  _configOrPaths: any,
-  _opts?: { paths?: string[]; signal?: AbortSignal },
+  workspaceOrConfig: string | { getWorkspaceContext?: () => { getDirectories?: () => string[] } } | unknown,
+  opts?: { paths?: string[]; signal?: AbortSignal },
 ): Promise<{
   contentParts: Array<string | { text?: string; [key: string]: unknown }>;
   files: Array<{ filePath: string; isDirectory?: boolean }>;
   error?: string;
 }> {
-  return { contentParts: [], files: [] };
+  const paths: string[] = opts?.paths ?? (Array.isArray(workspaceOrConfig) ? workspaceOrConfig : []);
+  if (opts?.signal?.aborted || paths.length === 0) {
+    return { contentParts: [], files: [] };
+  }
+  const workspace = resolveWorkspace(workspaceOrConfig);
+
+  const absPaths = paths.map((spec) => ({
+    spec,
+    absPath: path.isAbsolute(spec) ? spec : path.resolve(workspace, spec),
+  }));
+  const entries = await Promise.all(absPaths.map(({ spec, absPath }) => readOne(absPath, spec)));
+
+  const contentParts: Array<string | { text?: string }> = [];
+  const files: Array<{ filePath: string; isDirectory?: boolean }> = [];
+  for (const entry of entries) {
+    if (!entry) continue;
+    if (entry.kind === 'dir') {
+      files.push({ filePath: entry.absPath, isDirectory: true });
+      contentParts.push(`\n--- Directory: ${entry.spec} ---\n`);
+    } else {
+      files.push({ filePath: entry.absPath, isDirectory: false });
+      contentParts.push(`\n--- File: ${entry.spec} ---\n${entry.content}\n`);
+    }
+  }
+  return { contentParts, files };
 }
 export async function readPathFromWorkspace(
   _path: string,
