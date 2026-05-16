@@ -10,7 +10,7 @@ import { t } from '../../i18n/index.js';
 
 export const quitCommand: SlashCommand = {
   name: 'quit',
-  altNames: ['exit'],
+  altNames: ['exit', 'bye'],
   get description() {
     return t('exit the cli');
   },
@@ -25,7 +25,7 @@ export const quitCommand: SlashCommand = {
       messages: [
         {
           type: 'user',
-          text: `/quit`, // Keep it consistent, even if /exit was used
+          text: `/quit`,
           id: now - 1,
         },
         {

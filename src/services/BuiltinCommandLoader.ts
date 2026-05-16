@@ -22,7 +22,6 @@ import { exportCommand } from '../ui/commands/exportCommand.js';
 import { extensionsCommand } from '../ui/commands/extensionsCommand.js';
 import { helpCommand } from '../ui/commands/helpCommand.js';
 import { hooksCommand } from '../ui/commands/hooksCommand.js';
-import { ideCommand } from '../ui/commands/ideCommand.js';
 import { initCommand } from '../ui/commands/initCommand.js';
 import { languageCommand } from '../ui/commands/languageCommand.js';
 import { mcpCommand } from '../ui/commands/mcpCommand.js';
@@ -76,7 +75,6 @@ export class BuiltinCommandLoader implements ICommandLoader {
       extensionsCommand,
       helpCommand,
       hooksCommand,
-      await ideCommand(),
       initCommand,
       languageCommand,
       mcpCommand,
