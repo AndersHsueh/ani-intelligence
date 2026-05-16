@@ -966,8 +966,16 @@ export function getGitBranch(_dir: string): string | undefined { return undefine
 
 export function getMCPServerStatus(_name?: string): MCPServerStatus { return MCPServerStatus.DISCONNECTED; }
 
-export function getCurrentGeminiMdFilename(): string { return 'GEMINI.md'; }
-export function getAllGeminiMdFilenames(): string[] { return ['GEMINI.md']; }
+// Context file names - configurable per project
+export const ANI_CONTEXT_FILENAME = 'agent.md';
+export const QWEN_CONTEXT_FILENAME = 'GEMINI.md';
+
+export function getCurrentGeminiMdFilename(): string {
+  return ANI_CONTEXT_FILENAME;
+}
+export function getAllGeminiMdFilenames(): string[] {
+  return [ANI_CONTEXT_FILENAME, QWEN_CONTEXT_FILENAME];
+}
 
 export function loadServerHierarchicalMemory(
   ..._args: any[]

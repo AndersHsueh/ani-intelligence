@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
   const totalWidth = Math.max(60, Math.min(terminalWidth - 2, 120));
 
   // Title in top border: ╭─── Alice v0.5.6 ─── ... ╮
-  const titleStr = ` Alice v${version} `;
+  const titleStr = ` Ani v${version} `;
   const titleVis = getCachedStringWidth(titleStr);
   const dashTotal = Math.max(0, totalWidth - 2 - 4 - titleVis); // 2 corners, 4 opening dashes
   const dashRight = '─'.repeat(dashTotal);
@@ -156,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   // 模型来源图标 + 降级标记
   // ⚡ 本地模型 / ☁ 云端模型 / ↓ 降级状态
-  const isLocal = displayModelName.includes('local') || displayModelName.includes('localhost') ||
+  const isLocal = displayModelName.includes('local') || displayModelName.includes('oMLX') ||
     displayModelName.includes('lmstudio') || displayModelName.includes('ollama')
   const sourceIcon = isLocal ? ' [Local]' : ' [Cloud]'
   const degradedSuffix = modelDegraded ? ' ↓' : ' '
@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
   // Build left column rows (matched to right col length)
   const leftLines: Array<{ text: string; robot?: boolean; center?: boolean; color?: string }> = [
     { text: '' },
-    { text: 'Welcome to ALICE!', center: true },
+    { text: 'Welcome to Auto and Intelligence', center: true },
     { text: '' },
     { text: ROBOT_LINES[0], robot: true, center: true },
     { text: ROBOT_LINES[1], robot: true, center: true },

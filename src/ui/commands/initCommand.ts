@@ -20,7 +20,7 @@ import { t } from '../../i18n/index.js';
 export const initCommand: SlashCommand = {
   name: 'init',
   get description() {
-    return t('Analyzes the project and creates a tailored QWEN.md file.');
+    return t('Analyzes the project and creates a tailored agent.md file.');
   },
   kind: CommandKind.BUILT_IN,
   action: async (
@@ -40,16 +40,12 @@ export const initCommand: SlashCommand = {
 
     try {
       if (fs.existsSync(contextFilePath)) {
-        // If file exists but is empty (or whitespace), continue to initialize
         try {
           const existing = fs.readFileSync(contextFilePath, 'utf8');
-          if (existing && existing.trim().length > 0) {
-            // File exists and has content - ask for confirmation to overwrite
+          if (existing.trim()) {
             if (!context.overwriteConfirmed) {
               return {
                 type: 'confirm_action',
-                // TODO: Move to .tsx file to use JSX syntax instead of React.createElement
-                // For now, using React.createElement to maintain .ts compatibility for PR review
                 prompt: React.createElement(
                   Text,
                   null,
@@ -60,14 +56,12 @@ export const initCommand: SlashCommand = {
                 },
               };
             }
-            // User confirmed overwrite, continue with regeneration
           }
         } catch {
           // If we fail to read, conservatively proceed to (re)create the file
         }
       }
 
-      // Ensure an empty context file exists before prompting the model to populate it
       try {
         fs.writeFileSync(contextFilePath, '', 'utf8');
         context.ui.addItem(
@@ -95,39 +89,47 @@ export const initCommand: SlashCommand = {
     return {
       type: 'submit_prompt',
       content: `
-You are Qwen Code, an interactive CLI agent. Analyze the current directory and generate a comprehensive ${contextFileName} file to be used as instructional context for future interactions.
+Analyze this codebase and create a ${contextFileName} file, which will be given to future instances of this AI assistant to operate in this repository.
 
 **Analysis Process:**
 
-1.  **Initial Exploration:**
-    *   Start by listing the files and directories to get a high-level overview of the structure.
-    *   Read the README file (e.g., \`README.md\`, \`README.txt\`) if it exists. This is often the best place to start.
+1. **Initial Exploration:**
+   - List files and directories to get a high-level overview
+   - Read README if it exists
 
-2.  **Iterative Deep Dive (up to 10 files):**
-    *   Based on your initial findings, select a few files that seem most important (e.g., configuration files, main source files, documentation).
-    *   Read them. As you learn more, refine your understanding and decide which files to read next. You don't need to decide all 10 files at once. Let your discoveries guide your exploration.
+2. **Iterative Deep Dive (up to 10 files):**
+   - Based on findings, select and read the most important files
+   - Refine understanding as you learn more
 
-3.  **Identify Project Type:**
-    *   **Code Project:** Look for clues like \`package.json\`, \`requirements.txt\`, \`pom.xml\`, \`go.mod\`, \`Cargo.toml\`, \`build.gradle\`, or a \`src\` directory. If you find them, this is likely a software project.
-    *   **Non-Code Project:** If you don't find code-related files, this might be a directory for documentation, research papers, notes, or something else.
+3. **Identify Project Type:**
+   - **Code Project:** Look for \`package.json\`, \`requirements.txt\`, \`go.mod\`, \`Cargo.toml\`, etc.
+   - **Non-Code Project:** Documentation, research, notes, etc.
 
 **${contextFileName} Content Generation:**
 
 **For a Code Project:**
 
-*   **Project Overview:** Write a clear and concise summary of the project's purpose, main technologies, and architecture.
-*   **Building and Running:** Document the key commands for building, running, and testing the project. Infer these from the files you've read (e.g., \`scripts\` in \`package.json\`, \`Makefile\`, etc.). If you can't find explicit commands, provide a placeholder with a TODO.
-*   **Development Conventions:** Describe any coding styles, testing practices, or contribution guidelines you can infer from the codebase.
+- **Project Overview:** Clear summary of purpose, main technologies, and architecture
+- **Building and Running:** Key commands for build, run, test (infer from \`package.json\` scripts, \`Makefile\`, etc.)
+- **Development Conventions:** Coding styles, testing practices, contribution guidelines
 
 **For a Non-Code Project:**
 
-*   **Directory Overview:** Describe the purpose and contents of the directory. What is it for? What kind of information does it hold?
-*   **Key Files:** List the most important files and briefly explain what they contain.
-*   **Usage:** Explain how the contents of this directory are intended to be used.
+- **Directory Overview:** Purpose and contents
+- **Key Files:** Most important files and their contents
+- **Usage:** How contents are intended to be used
+
+**Important Guidelines:**
+
+- Only include what this AI would get wrong without it
+- Do not repeat obvious information from manifest files
+- Do not make up sections like "Common Development Tasks" or "Tips"
+- Include only information expressly found in files you read
+- Keep it concise — every line must pass: "Would removing this cause mistakes?"
 
 **Final Output:**
 
-Write the complete content to the \`${contextFileName}\` file. The output must be well-formatted Markdown.
+Write the complete content to \`${contextFileName}\`. The output must be well-formatted Markdown.
 `,
     };
   },

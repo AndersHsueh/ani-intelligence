@@ -10,8 +10,9 @@ import * as path from 'node:path';
 import { initCommand } from './initCommand.js';
 import { createMockCommandContext } from '../../test-utils/mockCommandContext.js';
 import { type CommandContext } from './types.js';
+import { getCurrentGeminiMdFilename } from '@qwen-code/qwen-code-core';
 
-// Mock the 'fs' module with both named and default exports to avoid breaking default import sites
+// Mock the 'fs' module
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
   const existsSync = vi.fn();
@@ -34,11 +35,10 @@ vi.mock('fs', async (importOriginal) => {
 describe('initCommand', () => {
   let mockContext: CommandContext;
   const targetDir = '/test/dir';
-  const DEFAULT_CONTEXT_FILENAME = 'QWEN.md';
-  const geminiMdPath = path.join(targetDir, DEFAULT_CONTEXT_FILENAME);
+  const contextFileName = getCurrentGeminiMdFilename();
+  const contextFilePath = path.join(targetDir, contextFileName);
 
   beforeEach(() => {
-    // Create a fresh mock context for each test
     mockContext = createMockCommandContext({
       services: {
         config: {
@@ -49,67 +49,53 @@ describe('initCommand', () => {
   });
 
   afterEach(() => {
-    // Clear all mocks after each test
     vi.clearAllMocks();
   });
 
-  it(`should ask for confirmation if ${DEFAULT_CONTEXT_FILENAME} already exists and is non-empty`, async () => {
-    // Arrange: Simulate that the file exists
+  it(`should ask for confirmation if ${contextFileName} already exists and is non-empty`, async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.spyOn(fs, 'readFileSync').mockReturnValue('# Existing content');
 
-    // Act: Run the command's action
     const result = await initCommand.action!(mockContext, '');
 
-    // Assert: Check for the correct confirmation request
     expect(result).toEqual(
       expect.objectContaining({
         type: 'confirm_action',
-        prompt: expect.anything(), // React element, not a string
+        prompt: expect.anything(),
         originalInvocation: expect.anything(),
       }),
     );
-    // Assert: Ensure no file was written yet
     expect(fs.writeFileSync).not.toHaveBeenCalled();
   });
 
-  it(`should create ${DEFAULT_CONTEXT_FILENAME} and submit a prompt if it does not exist`, async () => {
-    // Arrange: Simulate that the file does not exist
+  it(`should create ${contextFileName} and submit a prompt if it does not exist`, async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
-    // Act: Run the command's action
     const result = await initCommand.action!(mockContext, '');
 
-    // Assert: Check that writeFileSync was called correctly
-    expect(fs.writeFileSync).toHaveBeenCalledWith(geminiMdPath, '', 'utf8');
-
-    // Assert: Check that an informational message was added to the UI
+    expect(fs.writeFileSync).toHaveBeenCalledWith(contextFilePath, '', 'utf8');
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       {
         type: 'info',
-        text: `Empty ${DEFAULT_CONTEXT_FILENAME} created. Now analyzing the project to populate it.`,
+        text: `Empty ${contextFileName} created. Now analyzing the project to populate it.`,
       },
       expect.any(Number),
     );
-
-    // Assert: Check that the correct prompt is submitted
     expect(result).toEqual(
       expect.objectContaining({
         type: 'submit_prompt',
-        content: expect.stringContaining(
-          'You are Qwen Code, an interactive CLI agent',
-        ),
+        content: expect.stringContaining('Analyze this codebase'),
       }),
     );
   });
 
-  it(`should proceed to initialize when ${DEFAULT_CONTEXT_FILENAME} exists but is empty`, async () => {
+  it(`should proceed to initialize when ${contextFileName} exists but is empty`, async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.spyOn(fs, 'readFileSync').mockReturnValue('   \n  ');
 
     const result = await initCommand.action!(mockContext, '');
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(geminiMdPath, '', 'utf8');
+    expect(fs.writeFileSync).toHaveBeenCalledWith(contextFilePath, '', 'utf8');
     expect(result).toEqual(
       expect.objectContaining({
         type: 'submit_prompt',
@@ -117,49 +103,37 @@ describe('initCommand', () => {
     );
   });
 
-  it(`should regenerate ${DEFAULT_CONTEXT_FILENAME} when overwrite is confirmed`, async () => {
-    // Arrange: Simulate that the file exists and overwrite is confirmed
+  it(`should regenerate ${contextFileName} when overwrite is confirmed`, async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.spyOn(fs, 'readFileSync').mockReturnValue('# Existing content');
     mockContext.overwriteConfirmed = true;
 
-    // Act: Run the command's action
     const result = await initCommand.action!(mockContext, '');
 
-    // Assert: Check that writeFileSync was called correctly
-    expect(fs.writeFileSync).toHaveBeenCalledWith(geminiMdPath, '', 'utf8');
-
-    // Assert: Check that an informational message was added to the UI
+    expect(fs.writeFileSync).toHaveBeenCalledWith(contextFilePath, '', 'utf8');
     expect(mockContext.ui.addItem).toHaveBeenCalledWith(
       {
         type: 'info',
-        text: `Empty ${DEFAULT_CONTEXT_FILENAME} created. Now analyzing the project to populate it.`,
+        text: `Empty ${contextFileName} created. Now analyzing the project to populate it.`,
       },
       expect.any(Number),
     );
-
-    // Assert: Check that the correct prompt is submitted
     expect(result).toEqual(
       expect.objectContaining({
         type: 'submit_prompt',
-        content: expect.stringContaining(
-          'You are Qwen Code, an interactive CLI agent',
-        ),
+        content: expect.stringContaining('Analyze this codebase'),
       }),
     );
   });
 
   it('should return an error if config is not available', async () => {
-    // Arrange: Create a context without config
     const noConfigContext = createMockCommandContext();
     if (noConfigContext.services) {
       noConfigContext.services.config = null;
     }
 
-    // Act: Run the command's action
     const result = await initCommand.action!(noConfigContext, '');
 
-    // Assert: Check for the correct error message
     expect(result).toEqual({
       type: 'message',
       messageType: 'error',

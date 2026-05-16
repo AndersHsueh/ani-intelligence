@@ -43,7 +43,8 @@
     "open": "^10.1.2",
     "p-limit": "^7.3.0",
     "prompts": "^2.4.2",
-    "react": "^19.1.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "read-package-up": "^12.0.0",
     "shell-quote": "^1.8.3",
     "simple-git": "^3.30.0",
@@ -59,6 +60,9 @@
     "@qwen-code/web-templates": "./src/shim/web-templates.ts"
   },
   "devDependencies": {
-    "@types/react": "^19.1.0"
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.1.0",
+    "vitest": "^4.1.6"
   }
 }
