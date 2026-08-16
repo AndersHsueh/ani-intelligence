@@ -34,9 +34,31 @@ const DIM_COLOR = '#808080';
 // ── Robot art (imported from RobotArt.ts) ─────────────────────────────────────
 const ROBOT_LINES = robotArtLines;
 
+/**
+ * Symbols that `string-width` treats as width-2 emoji, but whose Unicode
+ * East Asian Width property is actually Neutral/Narrow (width 1) — and which
+ * render at width 1 in common terminal emulators (Terminal.app, iTerm2
+ * default config, tmux, etc.) since they lack an emoji presentation selector
+ * (U+FE0F). Miscounting these breaks the banner's fixed-width column math
+ * and misaligns the right-hand border.
+ *
+ * Note: '⚡' (U+26A1) is intentionally NOT in this list — its East Asian
+ * Width property is genuinely Wide, and `string-width`'s width=2 is correct.
+ */
+const NARROW_RENDERED_EMOJI = ['☁'];
+
+/** Visual width used for banner layout, correcting known narrow-rendered emoji. */
+function headerVisualWidth(s: string): number {
+  let w = getCachedStringWidth(s);
+  for (const ch of NARROW_RENDERED_EMOJI) {
+    if (s.includes(ch)) w -= 1;
+  }
+  return w;
+}
+
 /** Pad / truncate a string to exactly `width` visual columns. */
 function fixedWidth(s: string, width: number): string {
-  const w = getCachedStringWidth(s);
+  const w = headerVisualWidth(s);
   if (w >= width) {
     // Truncate — rough but sufficient for banner content
     return s.slice(0, Math.max(0, width));
@@ -46,7 +68,7 @@ function fixedWidth(s: string, width: number): string {
 
 /** Center a string within `width` columns. */
 function centerIn(s: string, width: number): string {
-  const w = getCachedStringWidth(s);
+  const w = headerVisualWidth(s);
   const pad = Math.max(0, width - w);
   const lpad = Math.floor(pad / 2);
   const rpad = pad - lpad;

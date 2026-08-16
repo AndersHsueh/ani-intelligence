@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Alice CLI entry point
  * Interactive mode: renders qwen-code Ink TUI with Alice daemon backend
