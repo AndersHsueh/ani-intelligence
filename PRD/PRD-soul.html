@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD · 创意基础点 #2 — 灵魂对象 · ALICE</title>
+<style>
+  :root {
+    --ink:#1a1612; --ink-soft:#4a4540; --ink-mute:#8a8580;
+    --paper:#f5f0e8; --paper-2:#ebe5d8; --rule:#d8d0c0;
+    --accent:#b85c00; --positive:#2d5016; --negative:#8b2a1f;
+    --serif:'Source Han Serif SC','Noto Serif SC','Songti SC','Iowan Old Style',Georgia,serif;
+    --sans:'Source Han Sans SC','Noto Sans SC','PingFang SC','Hiragino Sans GB',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Menlo','Source Han Mono SC',monospace;
+    --t-display:600 4.6rem/1.08 var(--serif); --t-h1:600 2.6rem/1.18 var(--serif);
+    --t-h2:600 1.75rem/1.28 var(--serif); --t-h3:600 1.25rem/1.4 var(--serif);
+    --t-body:400 1.0625rem/1.9 var(--serif); --t-eyebrow:500 0.78rem/1 var(--sans);
+    --t-mono:400 0.875rem/1.7 var(--mono); --t-small:400 0.875rem/1.7 var(--sans);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:1rem;line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 15% 0%,rgba(184,92,0,0.035),transparent 42%),
+      radial-gradient(circle at 92% 100%,rgba(74,69,64,0.045),transparent 50%);}
+  .doc{max-width:1060px;margin:0 auto;padding:6rem 3.5rem 8rem}
+  .eyebrow{font:var(--t-eyebrow);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-soft);display:inline-flex;align-items:center;gap:0.6rem}
+  .eyebrow::before{content:'';width:1.6rem;height:1px;background:var(--ink-soft)}
+  .hero{padding-top:2.5rem;padding-bottom:3.5rem;border-bottom:1px solid var(--rule);margin-bottom:4.5rem}
+  .hero .meta{display:flex;gap:2.4rem;flex-wrap:wrap;margin-bottom:2.2rem;color:var(--ink-soft);font:var(--t-small)}
+  .hero .meta b{color:var(--ink);font-weight:600}
+  .hero h1{font:var(--t-display);letter-spacing:-0.015em;margin:1.2rem 0 1.6rem}
+  .hero h1 .accent{color:var(--accent)}
+  .hero .lede{font-size:1.3rem;line-height:1.75;color:var(--ink-soft);max-width:44em}
+  .hero .lede b{color:var(--ink)}
+  h2.sec{font:var(--t-h1);letter-spacing:-0.01em;margin:5.5rem 0 1.8rem;padding-top:2.2rem;border-top:1px solid var(--rule)}
+  h2.sec .no{color:var(--accent);font-size:0.62em;vertical-align:0.32em;margin-right:0.55em}
+  h3{font:var(--t-h2);margin:3rem 0 1.1rem}
+  p{margin:0 0 1.15rem;max-width:46em}
+  p.lede{font-size:1.15rem;color:var(--ink-soft)}
+  b,strong{font-weight:600}
+  code{font-family:var(--mono);font-size:0.86em;background:var(--paper-2);padding:0.12em 0.4em;border-radius:3px}
+  .callout{border-left:3px solid var(--accent);background:var(--paper-2);padding:1.3rem 1.6rem;margin:1.8rem 0;max-width:46em}
+  .callout .label{font:var(--t-eyebrow);letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem}
+  .callout p:last-child{margin-bottom:0}
+  .callout.neg{border-left-color:var(--negative)} .callout.neg .label{color:var(--negative)}
+  .callout.pos{border-left-color:var(--positive)} .callout.pos .label{color:var(--positive)}
+  table{width:100%;border-collapse:collapse;margin:1.6rem 0 2.2rem;font:var(--t-small)}
+  th{text-align:left;font:var(--t-eyebrow);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);padding:0.7rem 0.9rem;border-bottom:2px solid var(--ink)}
+  td{padding:0.75rem 0.9rem;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.65}
+  td code{font-size:0.82em}
+  .diagram{font:var(--t-mono);background:var(--ink);color:#e8e2d6;padding:1.8rem 2rem;border-radius:6px;overflow-x:auto;margin:1.8rem 0 2.4rem;line-height:1.65;white-space:pre}
+  .diagram .a{color:#f0a860} .diagram .m{color:#9a93a8}
+  ul,ol{margin:0 0 1.4rem 1.4rem;max-width:44em}
+  li{margin-bottom:0.55rem;line-height:1.8}
+  li::marker{color:var(--accent)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin:1.8rem 0 2.4rem}
+  .card{border:1px solid var(--rule);background:rgba(255,255,255,0.35);padding:1.5rem 1.6rem;border-radius:6px}
+  .card .who{font:var(--t-eyebrow);letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:0.7rem}
+  .card h4{margin:0 0 0.6rem;font:var(--t-h3)}
+  .card p{font:var(--t-small);color:var(--ink-soft);margin-bottom:0.5rem}
+  .card p:last-child{margin-bottom:0}
+  .v{color:var(--positive);font-weight:600} .x{color:var(--negative);font-weight:600}
+  blockquote{margin:2rem 0;padding:0.2rem 0 0.2rem 1.6rem;border-left:2px solid var(--ink-mute);color:var(--ink-soft);font-style:italic;max-width:44em}
+  .footer{margin-top:7rem;padding-top:2rem;border-top:1px solid var(--rule);font:var(--t-small);color:var(--ink-mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="hero">
+  <div class="meta">
+    <span><b>文档</b> 产品需求说明 PRD</span>
+    <span><b>编号</b> 创意基础点 #2</span>
+    <span><b>状态</b> 提案 · 待评审</span>
+    <span><b>日期</b> 2026-08-17</span>
+    <span><b>配套</b> TECH-SUMMARY-soul.html</span>
+  </div>
+  <span class="eyebrow">Foundation Idea #2</span>
+  <h1>灵魂对象<br><span class="accent">The Soul</span></h1>
+  <p class="lede">
+    让每个 session 除了「状态」之外还有一个「灵魂」——
+    它知道<b>自己是谁</b>、<b>长在哪台机器里</b>、<b>此刻身处什么网络</b>。
+    主模型不再现查环境，而是<b>向内心询问</b>——
+    用户的感觉是：它生长在这台机器里，早已熟悉这里的一切。
+  </p>
+</header>
+
+<p class="lede" style="font-size:1.35rem;color:var(--ink);max-width:40em;">
+  没有灵魂对象的 Agent 是寄居蟹：每次都要现敲壳、现探路。<br>
+  有了灵魂，它是原住民。
+</p>
+
+<!-- ═══ 1. 问题 ═══ -->
+<h2 class="sec"><span class="no">01</span>问题：Agent 不知道自己身在何处</h2>
+
+<p>一个不知道自己运行环境的 Agent 会犯一类低级而致命的错误：在 2G 内存的机器上建议安装大型软件，在断网的机器上发起下载，在公共 WiFi 下漫不经心地处理敏感文件。<b>不是模型不够聪明，是它从未被告知自己活在一个什么样的身体里。</b></p>
+
+<p>当前的补救方式只有一种：主模型现查——<code>executeCommand</code> 跑系统命令、等返回、解析输出。一次 3–10 秒加一轮工具往返，且每次会话重复。更糟的是，查到的原始输出还要消耗宝贵的上下文去解读。</p>
+
+<div class="callout">
+  <div class="label">对照</div>
+  <p>状态对象解决「这个 session 进行到哪了」——Claude Code 已做得很好，我们学习，不重复发明。灵魂对象解决「我到底是谁、我在哪、这里安不安全」——<strong>这一层在 CC 里也不存在</strong>，是 alice-code 可以率先定义的东西。</p>
+</div>
+
+<!-- ═══ 2. 方案 ═══ -->
+<h2 class="sec"><span class="no">02</span>方案：两层灵魂，一个体检医生，两级询问</h2>
+
+<h3>2.1 灵魂 = 身份层 + 环境层</h3>
+<div class="cards">
+  <div class="card">
+    <div class="who">身份层 · Identity</div>
+    <h4>「你是谁」</h4>
+    <p>一段版本级不变的自我描述：你是严谨、有用、无害的 AI 助手；你的产品伦理；你的行为边界。</p>
+    <p>静态。随 release 演化，运行时不改写。</p>
+  </div>
+  <div class="card">
+    <div class="who">环境层 · Environment</div>
+    <h4>「你在哪」</h4>
+    <p>硬件画像（CPU/内存/磁盘/OS）、网络环境（类型/安全分级/联网状态）、已装工具链。</p>
+    <p>动态。由 soul-agent 探测核实，每条事实带核实时间戳。</p>
+  </div>
+  <div class="card">
+    <div class="who">行动约束 · Constraints</div>
+    <h4>「所以你该怎样」</h4>
+    <p>灵魂对象真正的灵魂：把事实<b>翻译成行动提示</b>。「内存 2G」本身没用，「不要建议本地跑大模型」才有用。</p>
+    <p>由 soul-agent 在后台完成转译，主模型读到的是结论。</p>
+  </div>
+</div>
+
+<h3>2.2 soul-agent：体检医生，不是思想家</h3>
+<p>心跳节拍上，soul-agent 默默做环境体检。但有一个关键设计立场：<b>核实环境事实不需要智能，需要代码</b>。内存、磁盘、网络接口状态都是确定性探测，比任何 LLM 都准确、快速、免费。LLM 只在两处出现：网络安全的模糊分类（启发式规则先行，LLM 兜底）、把结构化事实转写成自然语言摘要。</p>
+
+<p>soul-agent <b>从不主动打扰主模型</b>。它只维护一份已核实的环境档案，等待被询问。</p>
+
+<h3>2.3 主模型的两级「向内心询问」</h3>
+<table>
+  <tr><th style="width:16%">级别</th><th style="width:34%">机制</th><th>延迟与场景</th></tr>
+  <tr><td><b>L0 常驻摘要</b></td><td>灵魂摘要（~300 token 硬上限）作为稳定 prompt 前缀，永远在 system prompt 最前</td><td><b>零延迟、零工具调用</b>。「这台机器能跑 Win11 吗」直接作答——这是「原住民感」的完整来源</td></tr>
+  <tr><td><b>L1 向内询问</b></td><td><code>askSoul</code> 内置工具，查摘要之外的细节（Docker 版本？磁盘剩余？网络当前安全级？）</td><td><b>亚秒级</b>。读的是 soul-agent 预核实的事实库，不现跑命令</td></tr>
+</table>
+
+<div class="callout pos">
+  <div class="label">为什么是两级而非一个动作</div>
+  <p>L0 利用「稳定 prompt 前缀」换取缓存命中与零延迟——高频问题（环境能力判断）在这里解决。L1 覆盖低频细节查询。两级合一，主模型<strong>永远不需要</strong>为了解自己的运行环境而执行系统命令。</p>
+</div>
+
+<!-- ═══ 3. 用户体验 ═══ -->
+<h2 class="sec"><span class="no">03</span>用户体验对照</h2>
+
+<h3>没有灵魂（现状）</h3>
+<div class="diagram">用户: 这台机器能装 Docker Desktop 吗?
+主模型: 我来看看系统配置……        <span class="m">← executeCommand,3-10s</span>
+        [🔧 执行命令] systeminfo …
+        [🔧 执行命令] wmic os get …   <span class="m">← 又一次往返</span>
+        (解析 200 行原始输出,烧掉上下文)
+主模型: 你的内存是 8GB,可以装,但……</div>
+
+<h3>有了灵魂（本提案）</h3>
+<div class="diagram">用户: 这台机器能装 Docker Desktop 吗?
+主模型: 可以。这台机器 16GB 内存、Win11 23H2、磁盘剩余 120GB,
+        完全满足要求。不过当前没装 WSL2,建议先启用……
+        <span class="m">← 零工具调用。L0 常驻摘要直接回答,并主动指出约束。</span></div>
+
+<p>差异不只是速度。<b>现查的 Agent 像个第一天上班的临时工；向内心询问的 Agent 像在这里生活了三年的管家。</b>用户感知到的不是「它查了配置」，而是「它一直知道」。</p>
+
+<h3>网络安全的场景价值</h3>
+<table>
+  <tr><th style="width:30%">场景</th><th>灵魂带来的行为差异</th></tr>
+  <tr><td>家庭网络（已记忆、可信）</td><td>正常行为，无需额外谨慎</td></tr>
+  <tr><td>办公网络</td><td>提示用户注意公司数据边界（不阻断，仅提示）</td></tr>
+  <tr><td>公共开放 WiFi</td><td>主模型在给建议前自动提高谨慎等级：不建议明文传输凭证、不自动连陌生服务；soul 摘要中标注 <code>safety: untrusted</code></td></tr>
+  <tr><td>断网</td><td>主模型直接跳过一切需要联网的方案，改推本地替代——不试不错</td></tr>
+</table>
+
+<!-- ═══ 4. 与 #1 的关系 ═══ -->
+<h2 class="sec"><span class="no">04</span>与创意 #1 的关系：内感受器与门房</h2>
+
+<div class="diagram">        ┌─────────── 主模型(编排者) ───────────┐
+        │  上下文: 任务 + 灵魂摘要(L0) + 记忆便签  │
+        └───────▲───────────────────▲────────┘
+                │ 向内心询问(L1)      │ 门控注入(≤800tok)
+                │                    │
+     ┌──────────┴─────┐   ┌─────────┴──────────┐
+     │ <span class="a">soul-agent</span>      │   │ <span class="a">ANI</span>                │
+     │ 内感受器          │   │ 工作记忆的门房       │
+     │ 我是谁/我在哪/     │   │ 发生了什么/         │
+     │ 这里安不安全       │   │ 要不要打扰主模型     │
+     │ (内向·测量)       │   │ (外向·分诊)         │
+     └────────────────┘   └────────────────────┘</div>
+
+<ul>
+  <li><b>边界清晰不重叠</b>：soul 管「自我与环境」，ANI 管「事件与记忆」。一个内向测量，一个外向分诊。</li>
+  <li><b>基础设施完全复用</b>：AgentProfile 注册、scheduledTasks tick、静默+log、状态栏、OTEL——创意 #1 铺的管道，#2 直接接入，边际成本递减。</li>
+  <li><b>哲学差异</b>：ANI 必须调 LLM（分诊是判断）；soul-agent 大部分时间不调 LLM（体检是测量）。</li>
+</ul>
+
+<!-- ═══ 5. 原则 ═══ -->
+<h2 class="sec"><span class="no">05</span>设计原则与不做的事</h2>
+
+<h3>5.1 五条原则</h3>
+<ol>
+  <li><b>灵魂不出本机</b>。硬件+网络指纹是敏感画像，只存 <code>~/.alice/soul/</code>，永不进 trace 上传，永不进遥测。这是产品原则，不是技术限制。</li>
+  <li><b>测量优于推测</b>。能用系统调用拿到的事实，绝不让 LLM 猜。LLM 只做转译与模糊分类。</li>
+  <li><b>保守分级</b>。网络安全未知 = 不可信；分级只影响建议的谨慎程度，<b>永不构成阻断</b>——选择权永远在用户。</li>
+  <li><b>静默但可查账</b>。soul-agent 无 TUI 输出；探测记录进 daemon.log；用户可随时 <code>/soul</code> 查看自己的灵魂档案全文。</li>
+  <li><b>先学习后创新</b>。状态对象对齐 Claude Code 的成熟做法；灵魂对象是 alice-code 的自主创新。</li>
+</ol>
+
+<h3>5.2 明确不做</h3>
+<ul>
+  <li><span class="x">✕</span> 不做实时连续监控（体检按 tick + 事件驱动，不是守护进程式轮询）</li>
+  <li><span class="x">✕</span> 不做网络安全阻断/防火墙功能（提示谨慎 ≠ 限制行为）</li>
+  <li><span class="x">✕</span> 不把灵魂内容注入 ./.wiki 或任何项目目录（灵魂属于机器，记忆属于项目）</li>
+  <li><span class="x">✕</span> 不让 soul-agent 主动给主模型推消息（与 ANI 的门控注入不同——灵魂只能被询问）</li>
+  <li><span class="x">✕</span> 不做跨机器灵魂同步（每台机器有自己的灵魂，这是设计意图）</li>
+</ul>
+
+<!-- ═══ 6. 里程碑 ═══ -->
+<h2 class="sec"><span class="no">06</span>里程碑</h2>
+
+<table>
+  <tr><th style="width:12%">Phase</th><th style="width:34%">内容</th><th>验收底线</th></tr>
+  <tr><td><b>P0</b> 身份层</td><td>身份描述定稿（严谨/有用/无害 + 产品伦理）；稳定 prompt 前缀注入路径</td><td>任意 session 的 system prompt 头部含身份段；内容版本化；总开销 ≤150 token</td></tr>
+  <tr><td><b>P1</b> 环境探针</td><td>确定性探针模块（硬件/OS/磁盘/工具链/网络接口）；environment.json 落盘 + TTL</td><td>daemon 启动后 60s 内完成首次体检；探针零 LLM 调用；重复探测结果一致</td></tr>
+  <tr><td><b>P2</b> 灵魂摘要 + L0</td><td>事实 → 行动约束转译（constraints 数组）；≤300 token 摘要合成进 prompt 前缀</td><td>2G 内存机器上问「能跑本地大模型吗」→ 主模型零工具调用直接给出否定 + 替代建议</td></tr>
+  <tr><td><b>P3</b> L1 + 网络分级</td><td><code>askSoul</code> 工具；网络安全分级（启发式 + LLM 兜底）；网络切换事件驱动重探</td><td>从家庭网切到开放 WiFi → 5 分钟内 soul 更新 safety 分级；主模型随后的建议体现谨慎差异</td></tr>
+</table>
+
+<!-- ═══ 7. 风险 ═══ -->
+<h2 class="sec"><span class="no">07</span>风险与对策</h2>
+
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:14%">等级</th><th>对策</th></tr>
+  <tr><td>环境画像构成隐私敏感数据</td><td><b>高（已设计消解）</b></td><td>只存本地 ~/.alice/soul/；OTEL span 只记 probe 耗时不记内容；<code>/soul</code> 全文透明可查；不进任何同步协议</td></tr>
+  <tr><td>环境突变导致灵魂过期（换网络/插拔硬件）</td><td>中</td><td>TTL 过期 + 网络切换事件驱动重探双保险；每条事实带 verified_at，主模型可见时效</td></tr>
+  <tr><td>网络安全分级误判</td><td>中</td><td>保守默认（未知=不可信）；分级仅影响建议谨慎度，不阻断；误判成本是一张措辞更谨慎的回答</td></tr>
+  <tr><td>灵魂摘要侵占小上下文模型的窗口</td><td>低</td><td>L0 硬上限 ~300 token；超限时 soul-agent 自行压缩；32k 场景占比 &lt;1%</td></tr>
+  <tr><td>探针在冷门平台失败（如 BSD/容器）</td><td>低</td><td>探针全部失败安全：拿不到 = 字段标注 unknown，soul 摘要明示「环境信息不完整」而非编造</td></tr>
+</table>
+
+<!-- ═══ 8. 开放问题 ═══ -->
+<h2 class="sec"><span class="no">08</span>开放问题（评审时拍板）</h2>
+
+<ol>
+  <li><b>身份层的措辞主权</b>：「严谨/有用/无害」是占位表述，最终身份文案需要用户亲自定稿——这是产品人格，不该由 Agent 代写。</li>
+  <li><b>soul-agent 是否注册为第 9 个 profile</b>，还是作为 daemon 内建服务而非 AgentProfile？（倾向后者：它几乎不用 LLM，profile 的 modelPolicy 字段对它大半无用——见 TECH §2。）</li>
+  <li><b>灵魂与 channel workspace 的关系</b>：飞书通道进来的 session，灵魂摘要是否同样注入？（倾向：是，环境事实与通道无关。）</li>
+  <li><b>用户能否编辑自己的灵魂</b>（如手动声明「这是我的工作机」）？（倾向：可以，<code>~/.alice/soul/overrides.jsonc</code>，用户声明优先于探测结果。）</li>
+</ol>
+
+<blockquote>
+  状态让 Agent 知道自己在做什么；灵魂让 Agent 知道自己是谁、身在何处。<br>
+  前者向 Claude Code 学习，后者由 alice-code 定义。
+</blockquote>
+
+<div class="footer">
+  <span>ALICE · 创意基础点 #2 · 灵魂对象 PRD</span>
+  <span>2026-08-17 · 提案 v1 · 待评审</span>
+</div>
+
+</div>
+</body>
+</html>

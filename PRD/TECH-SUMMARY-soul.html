@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECH SUMMARY · 创意基础点 #2 — 灵魂对象 · ALICE</title>
+<style>
+  :root {
+    --ink:#1a1612; --ink-soft:#4a4540; --ink-mute:#8a8580;
+    --paper:#f5f0e8; --paper-2:#ebe5d8; --rule:#d8d0c0;
+    --accent:#b85c00; --positive:#2d5016; --negative:#8b2a1f;
+    --serif:'Source Han Serif SC','Noto Serif SC','Songti SC','Iowan Old Style',Georgia,serif;
+    --sans:'Source Han Sans SC','Noto Sans SC','PingFang SC','Hiragino Sans GB',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Menlo','Source Han Mono SC',monospace;
+    --t-display:600 4.2rem/1.08 var(--serif); --t-h1:600 2.4rem/1.2 var(--serif);
+    --t-h2:600 1.6rem/1.3 var(--serif); --t-h3:600 1.2rem/1.4 var(--serif);
+    --t-body:400 1.0625rem/1.9 var(--serif); --t-eyebrow:500 0.78rem/1 var(--sans);
+    --t-mono:400 0.875rem/1.7 var(--mono); --t-small:400 0.875rem/1.7 var(--sans);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:1rem;line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 85% 0%,rgba(184,92,0,0.035),transparent 42%),
+      radial-gradient(circle at 8% 100%,rgba(74,69,64,0.045),transparent 50%);}
+  .doc{max-width:1060px;margin:0 auto;padding:6rem 3.5rem 8rem}
+  .eyebrow{font:var(--t-eyebrow);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-soft);display:inline-flex;align-items:center;gap:0.6rem}
+  .eyebrow::before{content:'';width:1.6rem;height:1px;background:var(--ink-soft)}
+  .hero{padding-top:2.5rem;padding-bottom:3.5rem;border-bottom:1px solid var(--rule);margin-bottom:4.5rem}
+  .hero .meta{display:flex;gap:2.4rem;flex-wrap:wrap;margin-bottom:2.2rem;color:var(--ink-soft);font:var(--t-small)}
+  .hero .meta b{color:var(--ink);font-weight:600}
+  .hero h1{font:var(--t-display);letter-spacing:-0.015em;margin:1.2rem 0 1.6rem}
+  .hero h1 .accent{color:var(--accent)}
+  .hero .lede{font-size:1.25rem;line-height:1.75;color:var(--ink-soft);max-width:46em}
+  .hero .lede b{color:var(--ink)}
+  h2.sec{font:var(--t-h1);letter-spacing:-0.01em;margin:5.5rem 0 1.8rem;padding-top:2.2rem;border-top:1px solid var(--rule)}
+  h2.sec .no{color:var(--accent);font-size:0.62em;vertical-align:0.32em;margin-right:0.55em}
+  h3{font:var(--t-h2);margin:3rem 0 1.1rem}
+  p{margin:0 0 1.15rem;max-width:48em}
+  b,strong{font-weight:600}
+  code{font-family:var(--mono);font-size:0.86em;background:var(--paper-2);padding:0.12em 0.4em;border-radius:3px}
+  .callout{border-left:3px solid var(--accent);background:var(--paper-2);padding:1.3rem 1.6rem;margin:1.8rem 0;max-width:48em}
+  .callout .label{font:var(--t-eyebrow);letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem}
+  .callout p:last-child{margin-bottom:0}
+  .callout.neg{border-left-color:var(--negative)} .callout.neg .label{color:var(--negative)}
+  table{width:100%;border-collapse:collapse;margin:1.6rem 0 2.2rem;font:var(--t-small)}
+  th{text-align:left;font:var(--t-eyebrow);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);padding:0.7rem 0.9rem;border-bottom:2px solid var(--ink)}
+  td{padding:0.75rem 0.9rem;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.6}
+  td code{font-size:0.8em}
+  pre.code{font:var(--t-mono);background:var(--ink);color:#e8e2d6;padding:1.6rem 1.8rem;border-radius:6px;overflow-x:auto;margin:1.6rem 0 2.2rem;line-height:1.6}
+  pre.code .c{color:#8a8578} pre.code .k{color:#f0a860} pre.code .s{color:#a8c686}
+  .diagram{font:var(--t-mono);background:var(--paper-2);color:var(--ink);border:1px solid var(--rule);padding:1.8rem 2rem;border-radius:6px;overflow-x:auto;margin:1.8rem 0 2.4rem;line-height:1.6;white-space:pre}
+  .diagram .a{color:var(--accent);font-weight:600} .diagram .m{color:var(--ink-mute)}
+  ul,ol{margin:0 0 1.4rem 1.4rem;max-width:46em}
+  li{margin-bottom:0.55rem;line-height:1.8}
+  li::marker{color:var(--accent)}
+  .v{color:var(--positive);font-weight:600} .x{color:var(--negative);font-weight:600}
+  .footer{margin-top:7rem;padding-top:2rem;border-top:1px solid var(--rule);font:var(--t-small);color:var(--ink-mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="hero">
+  <div class="meta">
+    <span><b>文档</b> 技术概要 TECH SUMMARY</span>
+    <span><b>编号</b> 创意基础点 #2</span>
+    <span><b>读者</b> 实现者 / 评审 Agent</span>
+    <span><b>日期</b> 2026-08-17</span>
+    <span><b>配套</b> PRD-soul.html</span>
+  </div>
+  <span class="eyebrow">Foundation Idea #2 · Engineering</span>
+  <h1>灵魂对象<br><span class="accent">探针、档案与两级询问</span></h1>
+  <p class="lede">
+    核心工程判断：<b>灵魂系统 90% 是确定性代码，不是 LLM 调用。</b>
+    环境事实由探针测量，LLM 只做转译与模糊分类；
+    主模型经稳定 prompt 前缀（L0）与 <code>askSoul</code> 工具（L1）两级获取灵魂，
+    <b>永不为环境自查执行系统命令</b>。
+  </p>
+</header>
+
+<!-- ═══ 1. 架构 ═══ -->
+<h2 class="sec"><span class="no">01</span>运行时架构</h2>
+
+<div class="diagram">┌─────────────────────────── VERONICA daemon ───────────────────────────┐
+│                                                                      │
+│  ┌──────────────┐   tick(默认10min)+网络事件    ┌─────────────────┐    │
+│  │ soul-agent    │────────────────────────────►│ 确定性探针集      │    │
+│  │ (体检调度器)   │                              │ hardware/network/│   │
+│  │              │◄─────────────────────────────│ toolchain        │    │
+│  └──────┬───────┘        原始事实(零 LLM)        └─────────────────┘    │
+│         │                                                              │
+│         │  ① 写 environment.json(原子 rename)                            │
+│         │  ② 事实→constraints 转译(规则先行,LLM 兜底)                     │
+│         │  ③ 合成 ≤300tok 灵魂摘要                                       │
+│         ▼                                                              │
+│  ~/.alice/soul/                                                        │
+│  ├── identity.md         <span class="m"># 身份层,版本级静态</span>                        │
+│  ├── environment.json    <span class="m"># 环境层,带 verified_at</span>                   │
+│  ├── summary.md          <span class="m"># L0 灵魂摘要(合成产物)</span>                     │
+│  └── overrides.jsonc     <span class="m"># 用户声明,优先级最高</span>                       │
+└────────┬─────────────────────────────────────────────────┬──────────┘
+         │ L0: summary.md 进 system prompt 前缀             │ L1: askSoul 工具
+         ▼                                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ agentLoop(主模型)                                                     │
+│  system prompt = [灵魂摘要 L0] + [既有系统段] + [记忆便签(#1)] + ...     │
+└─────────────────────────────────────────────────────────────────────┘</div>
+
+<p>三条铁律：</p>
+<ol>
+  <li><b>探针零 LLM</b>。hardware/network/toolchain 全部确定性采集；LLM 仅用于安全分类兜底与摘要转写，且只在事实变化时触发。</li>
+  <li><b>灵魂只读</b>。主模型与任何其他 Agent 只能读 soul 档案；写入口只有 soul-agent 与用户 overrides。</li>
+  <li><b>事实带戳</b>。environment.json 每个分区带 <code>verified_at</code>；过期事实在摘要中降级为「截至 X 时的状态」，绝不装作新鲜。</li>
+</ol>
+
+<!-- ═══ 2. 接线表 ═══ -->
+<h2 class="sec"><span class="no">02</span>与现有模块的接线表</h2>
+
+<table>
+  <tr><th style="width:24%">新组件</th><th style="width:38%">挂点（现有模块）</th><th>接线方式</th></tr>
+  <tr><td>soul-agent</td><td><code>daemon_settings.jsonc</code> scheduledTasks + daemon 心跳（既有）</td><td><b>注册为 daemon 内建服务而非 AgentProfile</b>——它 90% 不调 LLM，profile 的 modelPolicy 对它大半无用；仅 LLM 转写/分类环节走 mini 档模型（见 §5）</td></tr>
+  <tr><td>L0 灵魂摘要注入</td><td>system prompt 组装处（<code>core/llm.ts</code> / agentLoop 消息构造）</td><td>读取 <code>~/.alice/soul/summary.md</code>，置于 system prompt <b>最前</b>——稳定前缀，缓存命中最大化（对齐 CC 方法论 #8）</td></tr>
+  <tr><td>L1 askSoul 工具</td><td><code>src/tools/builtin/</code> 注册表（17 工具的既有入口）</td><td>新增第 18 个 builtin 工具；只读 soul 档案 + 字段查询；isPathSafe 限 ~/.alice/soul/</td></tr>
+  <tr><td>环境探针</td><td>Node <code>os</code>/<code>fs</code> API + 既有 <code>executeCommand</code> 的命令运行器（内部调用，不经 LLM）</td><td>纯代码模块 <code>src/services/soul/probes/*.ts</code>；失败安全（unknown 而非编造）</td></tr>
+  <tr><td>网络切换监听</td><td>daemon 生命周期（既有）+ OS 网络事件</td><td>轮询默认路由/接口变更（30s 间隔纯 IO）或 OS 事件 API；变更即触发重探</td></tr>
+  <tr><td>可观测性</td><td>OTEL 三件套（v3.1.0 #11）+ daemon.log</td><td>span：<code>soul.probe</code> / <code>soul.translate</code> / <code>soul.refresh</code>；<b>span 只记耗时与字段数，不记画像内容</b>（隐私合同）</td></tr>
+  <tr><td>用户查看</td><td>slash 命令注册（既有 commands/ 体系）</td><td><code>/soul</code> 打印灵魂档案全文 + 各分区 verified_at</td></tr>
+</table>
+
+<div class="callout">
+  <div class="label">与创意 #1 的架构差分</div>
+  <p>ANI 是 AgentProfile（分诊需要 LLM 判断）；<strong>soul-agent 是 daemon 内建服务</strong>（体检主要是测量）。这是两者唯一的本质结构差异，其余管道（tick / 静默日志 / 状态栏 / feature flag）完全复用 #1。</p>
+</div>
+
+<!-- ═══ 3. 数据合同 ═══ -->
+<h2 class="sec"><span class="no">03</span>数据合同</h2>
+
+<h3>3.1 identity.md（身份层 · 版本级静态）</h3>
+<pre class="code"><span class="c"># 随 alice-code release 分发;运行时不改写;措辞主权在用户(评审定稿)</span>
+你是 ALICE,一个严谨、有用、且无害的 AI 助手。
+<span class="c"># …行为边界与产品伦理(引用既有产品原则:用户是人,知情+同意+选择权)…</span></pre>
+
+<h3>3.2 environment.json（环境层 · 带戳事实）</h3>
+<pre class="code">{
+  <span class="k">"hardware"</span>: {
+    <span class="k">"verified_at"</span>: <span class="s">"2026-08-17T06:00:00+08:00"</span>,
+    <span class="k">"os"</span>: <span class="s">"windows-11-23h2"</span>, <span class="k">"arch"</span>: <span class="s">"x64"</span>,
+    <span class="k">"cpu_model"</span>: <span class="s">"..."</span>, <span class="k">"cpu_cores"</span>: <span class="k">8</span>,
+    <span class="k">"ram_gb"</span>: <span class="k">16</span>, <span class="k">"disk_free_gb"</span>: <span class="k">120</span>,
+    <span class="k">"gpu"</span>: <span class="s">"unknown"</span>          <span class="c">// 探测失败=unknown,不编造</span>
+  },
+  <span class="k">"network"</span>: {
+    <span class="k">"verified_at"</span>: <span class="s">"2026-08-17T06:20:00+08:00"</span>,   <span class="c">// 分区独立时间戳</span>
+    <span class="k">"internet"</span>: <span class="k">true</span>,
+    <span class="k">"type"</span>: <span class="s">"wifi"</span>,                  <span class="c">// wifi | ethernet | offline</span>
+    <span class="k">"ssid_hash"</span>: <span class="s">"sha256:…"</span>,          <span class="c">// 只存哈希,不存明文 SSID</span>
+    <span class="k">"security"</span>: <span class="s">"wpa2"</span>,               <span class="c">// open | wep | wpa2 | enterprise | unknown</span>
+    <span class="k">"safety"</span>: <span class="s">"trusted"</span>,              <span class="c">// trusted | office | untrusted | unknown</span>
+    <span class="k">"safety_reason"</span>: <span class="s">"SSID 哈希命中用户标记的家庭网络"</span>
+  },
+  <span class="k">"toolchain"</span>: {
+    <span class="k">"verified_at"</span>: <span class="s">"…"</span>,
+    <span class="k">"node"</span>: <span class="s">"22.x"</span>, <span class="k">"python"</span>: <span class="s">"3.12"</span>, <span class="k">"rg"</span>: <span class="k">true</span>, <span class="k">"docker"</span>: <span class="k">false</span>,
+    <span class="k">"git"</span>: <span class="k">true</span>
+  },
+  <span class="k">"constraints"</span>: [                    <span class="c">// ★ 灵魂的灵魂:事实→行动约束</span>
+    <span class="s">"磁盘剩余充足(120GB):可建议安装大型工具"</span>,
+    <span class="s">"无 docker:容器化方案需先装 Docker 或改用替代"</span>
+  ]
+}</pre>
+
+<div class="callout neg">
+  <div class="label">隐私合同（硬约束）</div>
+  <p>SSID 等网络标识<strong>只存 SHA-256 哈希</strong>，用户可在 overrides 里给哈希贴标签（"家"/"公司"）；灵魂档案永不进入 OTEL span 属性、永不进 ./.wiki、永不进任何同步协议。environment.json 不离开 <code>~/.alice/soul/</code>。</p>
+</div>
+
+<h3>3.3 summary.md（L0 摘要 · ≤300 token 硬上限）</h3>
+<pre class="code"><span class="c"># 由 soul-agent 合成;超限则自我压缩;身份段在前,环境段在后,约束收尾</span>
+[身份] 你是 ALICE,严谨、有用、无害的 AI 助手。…(≤100tok)
+[环境·截至 06:20] Win11 x64,8 核,16GB 内存,磁盘余 120GB。
+网络:WiFi,可信(家庭)。工具链:node22/python3.12/rg/git;无 docker。
+[约束] 无 docker 时优先非容器方案;…(≤3 条,按对当前影响排序)</pre>
+
+<h3>3.4 overrides.jsonc（用户声明 · 最高优先级）</h3>
+<pre class="code">{
+  <span class="c">// 用户的自我声明优先于探测结果;soul-agent 转译时先读本文件</span>
+  <span class="k">"role"</span>: <span class="s">"这是我的工作机"</span>,
+  <span class="k">"known_networks"</span>: { <span class="s">"sha256:…"</span>: <span class="s">"家"</span>, <span class="s">"sha256:…"</span>: <span class="s">"公司"</span> },
+  <span class="k">"extra_constraints"</span>: [<span class="s">"工作时间不执行耗时构建"</span>]
+}</pre>
+
+<h3>3.5 写入纪律</h3>
+<ul>
+  <li>environment.json 更新 = 写临时文件 + <b>原子 rename</b>（与 #1 水位线同一模式）；</li>
+  <li>无变化不写入（逐字段 diff）——mtime 即「环境是否变化」的零成本信号；</li>
+  <li>summary.md 只在 environment/constraints 变化时重新合成，避免 prompt 前缀漂移破坏缓存。</li>
+</ul>
+
+<!-- ═══ 4. 探针清单 ═══ -->
+<h2 class="sec"><span class="no">04</span>探针清单（全部确定性，零 LLM）</h2>
+
+<table>
+  <tr><th style="width:20%">探针</th><th style="width:40%">实现</th><th>频率 / 触发</th></tr>
+  <tr><td>hardware</td><td>Node <code>os.totalmem()</code> / <code>os.cpus()</code> / <code>os.platform()</code>；磁盘 <code>fs.statfs()</code>（Node ≥18.15）</td><td>daemon 启动 + 24h TTL</td></tr>
+  <tr><td>toolchain</td><td><code>which/where</code> + <code>--version</code> 探测（node/python/git/rg/docker/ollama）</td><td>daemon 启动 + 24h TTL</td></tr>
+  <tr><td>network.connectivity</td><td>对 3 个知名端点做 HEAD（超时 2s，多数决）</td><td>tick 10min + 接口变更事件</td></tr>
+  <tr><td>network.type/security</td><td>Windows <code>netsh wlan show interfaces</code> / macOS <code>airport</code> 替代 / Linux <code>iwconfig</code>；失败 → unknown</td><td>同上</td></tr>
+  <tr><td>network.safety 分级</td><td><b>规则先行</b>：offline→n/a；SSID 哈希命中 overrides→对应标签；open security→untrusted；ethernet+办公域名启发→office；其余→unknown（保守）</td><td>随 network 探测</td></tr>
+</table>
+
+<p>LLM 仅出现在：规则分级输出 <code>unknown</code> 且证据模糊时，由 mini 档模型做一次分类兜底（输入只有哈希化特征，无隐私原文）；以及 constraints 的初次转写。<b>两次都是「事实变化才触发」，日常 tick 零 LLM 调用。</b></p>
+
+<h3>4.1 两级询问的实现</h3>
+<table>
+  <tr><th style="width:14%">级别</th><th>实现</th></tr>
+  <tr><td><b>L0</b></td><td>agentLoop 构造 system prompt 时读 <code>summary.md</code>（mtime 缓存，避免每轮 IO）；置于最前，与既有系统段、#1 记忆便签段按序拼接</td></tr>
+  <tr><td><b>L1</b></td><td><code>askSoul({ section, key? })</code>：读 environment.json 指定分区返回结构化 JSON；<code>section</code> ∈ identity/hardware/network/toolchain/constraints/all；响应带 verified_at，主模型自判时效</td></tr>
+</table>
+
+<!-- ═══ 5. 配置合同 ═══ -->
+<h2 class="sec"><span class="no">05</span>配置合同</h2>
+
+<pre class="code"><span class="c">// ~/.alice/settings.jsonc</span>
+<span class="s">"soul"</span>: {
+  <span class="k">"enabled"</span>: <span class="k">true</span>,
+  <span class="k">"summaryMaxTokens"</span>: <span class="k">300</span>,        <span class="c">// L0 硬上限</span>
+  <span class="k">"probeIntervalMs"</span>: <span class="k">600000</span>,       <span class="c">// 常规体检 10min(纯 IO,无 LLM)</span>
+  <span class="k">"classifyModel"</span>: <span class="s">"minimax-m2.7-highspeed"</span>,  <span class="c">// 仅模糊分类兜底</span>
+  <span class="k">"networkSafety"</span>: <span class="s">"advisory"</span>      <span class="c">// advisory=仅影响建议措辞;永无 blocking 档</span>
+}</pre>
+
+<pre class="code"><span class="c">// ~/.alice/feature_flags.jsonc</span>
+{ <span class="k">"soul"</span>: <span class="k">true</span> }   <span class="c">// 整体门控;关闭时零注入零探测,回到现状</span></pre>
+
+<!-- ═══ 6. 测试矩阵 ═══ -->
+<h2 class="sec"><span class="no">06</span>测试矩阵（接入 bun run test:core）</h2>
+
+<table>
+  <tr><th style="width:26%">测试脚本</th><th style="width:14%">覆盖</th><th>断言要点</th></tr>
+  <tr><td><code>test-soul-probes.ts</code></td><td>P1</td><td>各探针在 mock OS 层下输出稳定；探测失败 → unknown 而非异常；零 LLM 调用（mock provider 计数为 0）</td></tr>
+  <tr><td><code>test-soul-store.ts</code></td><td>P1</td><td>environment.json 原子写入；无变化不重写（mtime 不变）；分区 verified_at 独立更新</td></tr>
+  <tr><td><code>test-soul-summary.ts</code></td><td>P2</td><td>摘要 ≤300 token；事实变化才重新合成；constraints 按规则转译（2GB RAM → 含「不装大软件」类约束）</td></tr>
+  <tr><td><code>test-soul-inject.ts</code></td><td>P2</td><td>L0 摘要位于 system prompt 最前；feature flag 关闭时零注入；摘要漂移检测（不变时不触发缓存失效）</td></tr>
+  <tr><td><code>test-ask-soul.ts</code></td><td>P3</td><td>分区查询正确；响应带 verified_at；越界路径（~/.alice/soul/ 之外）被 isPathSafe 拒绝</td></tr>
+  <tr><td><code>test-network-safety.ts</code></td><td>P3</td><td>分级规则矩阵：open→untrusted / overrides 命中→trusted / 未知→unknown（保守）；SSID 只存哈希不落明文；分级永不影响工具权限（advisory 语义）</td></tr>
+  <tr><td><code>test-soul-privacy.ts</code></td><td>全部</td><td>OTEL span 无画像内容；soul 文件不进 ./.wiki 扫描路径；sync 协议白名单不含 ~/.alice/soul/</td></tr>
+</table>
+
+<!-- ═══ 7. 工作量 ═══ -->
+<h2 class="sec"><span class="no">07</span>工作量估算与依赖</h2>
+
+<table>
+  <tr><th>Phase</th><th>新增文件（核心）</th><th>改动文件</th><th>估算</th></tr>
+  <tr><td>P0 身份层</td><td><code>src/services/soul/identity.ts</code> + identity.md 资源</td><td>system prompt 组装处</td><td>1d</td></tr>
+  <tr><td>P1 环境探针</td><td><code>src/services/soul/probes/{hardware,network,toolchain}.ts</code>、<code>soulStore.ts</code></td><td><code>daemon/index.ts</code>（启动体检钩子）</td><td>3d</td></tr>
+  <tr><td>P2 摘要 + L0</td><td><code>src/services/soul/summaryComposer.ts</code>、<code>constraints.ts</code></td><td>prompt 组装、feature flag 接线</td><td>3d</td></tr>
+  <tr><td>P3 L1 + 网络分级</td><td><code>src/tools/builtin/askSoul.ts</code>、<code>networkSafety.ts</code>、网络事件监听</td><td>工具注册表、<code>/soul</code> 命令</td><td>3d</td></tr>
+  <tr><td colspan="3" style="text-align:right"><b>合计（含 7 个测试脚本）</b></td><td><b>~2 周</b></td></tr>
+</table>
+
+<p>依赖检查：零阻塞。与创意 #1 无代码依赖（可并行或任意先后）；唯一共享处是 system prompt 组装顺序——约定为 <code>[灵魂 L0] → [既有系统段] → [记忆便签]</code>，灵魂在前因为它最稳定（缓存友好）。</p>
+
+<!-- ═══ 8. 留白 ═══ -->
+<h2 class="sec"><span class="no">08</span>有意留白（本周期明确不做）</h2>
+
+<ul>
+  <li><b>实时连续监控</b> —— 10min tick + 事件驱动足够；秒级守护轮询是电池与噪音的双重浪费；</li>
+  <li><b>blocking 级网络安全</b> —— 分级永远 advisory；阻断权只属于用户本人；</li>
+  <li><b>跨机器灵魂同步</b> —— 每台机器有自己的灵魂，这是设计意图（Mac 与 PC 的灵魂本就不同）；</li>
+  <li><b>GPU/深度硬件指纹</b> —— 第一期 unknown 即可；等真实需求（本地模型选型）出现再补探针；</li>
+  <li><b>灵魂自演化</b> —— soul-agent 不改写 identity.md；身份措辞的变更权只属于 release 与用户。</li>
+</ul>
+
+<div class="callout">
+  <div class="label">一句话总结</div>
+  <p>探针只测量、档案只带戳、摘要只占三百 token、分级永远建议不阻断、灵魂永不出本机——<strong>主模型从此不必为认识自己而敲一次命令。</strong></p>
+</div>
+
+<div class="footer">
+  <span>ALICE · 创意基础点 #2 · 灵魂对象 TECH SUMMARY</span>
+  <span>2026-08-17 · 提案 v1 · 待评审</span>
+</div>
+
+</div>
+</body>
+</html>
