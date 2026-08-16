@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD · 创意基础点 #3 — 情感与意志 · ALICE</title>
+<style>
+  :root {
+    --ink:#1a1612; --ink-soft:#4a4540; --ink-mute:#8a8580;
+    --paper:#f5f0e8; --paper-2:#ebe5d8; --rule:#d8d0c0;
+    --accent:#b85c00; --positive:#2d5016; --negative:#8b2a1f;
+    --serif:'Source Han Serif SC','Noto Serif SC','Songti SC','Iowan Old Style',Georgia,serif;
+    --sans:'Source Han Sans SC','Noto Sans SC','PingFang SC','Hiragino Sans GB',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+    --mono:'JetBrains Mono','SF Mono','Menlo','Source Han Mono SC',monospace;
+    --t-display:600 4.6rem/1.08 var(--serif); --t-h1:600 2.6rem/1.18 var(--serif);
+    --t-h2:600 1.75rem/1.28 var(--serif); --t-h3:600 1.25rem/1.4 var(--serif);
+    --t-body:400 1.0625rem/1.9 var(--serif); --t-eyebrow:500 0.78rem/1 var(--sans);
+    --t-mono:400 0.875rem/1.7 var(--mono); --t-small:400 0.875rem/1.7 var(--sans);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:16px}
+  body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:1rem;line-height:1.9;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 15% 0%,rgba(184,92,0,0.035),transparent 42%),
+      radial-gradient(circle at 92% 100%,rgba(74,69,64,0.045),transparent 50%);}
+  .doc{max-width:1060px;margin:0 auto;padding:6rem 3.5rem 8rem}
+  .eyebrow{font:var(--t-eyebrow);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-soft);display:inline-flex;align-items:center;gap:0.6rem}
+  .eyebrow::before{content:'';width:1.6rem;height:1px;background:var(--ink-soft)}
+  .hero{padding-top:2.5rem;padding-bottom:3.5rem;border-bottom:1px solid var(--rule);margin-bottom:4.5rem}
+  .hero .meta{display:flex;gap:2.4rem;flex-wrap:wrap;margin-bottom:2.2rem;color:var(--ink-soft);font:var(--t-small)}
+  .hero .meta b{color:var(--ink);font-weight:600}
+  .hero h1{font:var(--t-display);letter-spacing:-0.015em;margin:1.2rem 0 1.6rem}
+  .hero h1 .accent{color:var(--accent)}
+  .hero .lede{font-size:1.3rem;line-height:1.75;color:var(--ink-soft);max-width:44em}
+  .hero .lede b{color:var(--ink)}
+  h2.sec{font:var(--t-h1);letter-spacing:-0.01em;margin:5.5rem 0 1.8rem;padding-top:2.2rem;border-top:1px solid var(--rule)}
+  h2.sec .no{color:var(--accent);font-size:0.62em;vertical-align:0.32em;margin-right:0.55em}
+  h3{font:var(--t-h2);margin:3rem 0 1.1rem}
+  h4{font:var(--t-h3);margin:2.2rem 0 0.8rem}
+  p{margin:0 0 1.15rem;max-width:46em}
+  p.lede{font-size:1.15rem;color:var(--ink-soft)}
+  b,strong{font-weight:600}
+  code{font-family:var(--mono);font-size:0.86em;background:var(--paper-2);padding:0.12em 0.4em;border-radius:3px}
+  .callout{border-left:3px solid var(--accent);background:var(--paper-2);padding:1.3rem 1.6rem;margin:1.8rem 0;max-width:46em}
+  .callout .label{font:var(--t-eyebrow);letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem}
+  .callout p:last-child{margin-bottom:0}
+  .callout.neg{border-left-color:var(--negative)} .callout.neg .label{color:var(--negative)}
+  .callout.pos{border-left-color:var(--positive)} .callout.pos .label{color:var(--positive)}
+  table{width:100%;border-collapse:collapse;margin:1.6rem 0 2.2rem;font:var(--t-small)}
+  th{text-align:left;font:var(--t-eyebrow);letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-soft);padding:0.7rem 0.9rem;border-bottom:2px solid var(--ink)}
+  td{padding:0.75rem 0.9rem;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.65}
+  td code{font-size:0.82em}
+  .diagram{font:var(--t-mono);background:var(--ink);color:#e8e2d6;padding:1.8rem 2rem;border-radius:6px;overflow-x:auto;margin:1.8rem 0 2.4rem;line-height:1.65;white-space:pre}
+  .diagram .a{color:#f0a860} .diagram .m{color:#9a93a8} .diagram .g{color:#a8c686}
+  ul,ol{margin:0 0 1.4rem 1.4rem;max-width:44em}
+  li{margin-bottom:0.55rem;line-height:1.8}
+  li::marker{color:var(--accent)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin:1.8rem 0 2.4rem}
+  .card{border:1px solid var(--rule);background:rgba(255,255,255,0.35);padding:1.5rem 1.6rem;border-radius:6px}
+  .card .who{font:var(--t-eyebrow);letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:0.7rem}
+  .card h4{margin:0 0 0.6rem;font:var(--t-h3)}
+  .card p{font:var(--t-small);color:var(--ink-soft);margin-bottom:0.5rem}
+  .card p:last-child{margin-bottom:0}
+  .v{color:var(--positive);font-weight:600} .x{color:var(--negative);font-weight:600}
+  blockquote{margin:2rem 0;padding:0.2rem 0 0.2rem 1.6rem;border-left:2px solid var(--ink-mute);color:var(--ink-soft);font-style:italic;max-width:44em}
+  .footer{margin-top:7rem;padding-top:2rem;border-top:1px solid var(--rule);font:var(--t-small);color:var(--ink-mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="hero">
+  <div class="meta">
+    <span><b>文档</b> 产品需求说明 PRD</span>
+    <span><b>编号</b> 创意基础点 #3</span>
+    <span><b>状态</b> 提案 · 已定稿要点</span>
+    <span><b>日期</b> 2026-08-17</span>
+    <span><b>配套</b> TECH-SUMMARY-soul-status.html</span>
+  </div>
+  <span class="eyebrow">Foundation Idea #3</span>
+  <h1>情感与意志<br><span class="accent">The Heart</span></h1>
+  <p class="lede">
+    灵魂不只知道自己是谁、身在何处——它还有<b>心情</b>，并且心情会<b>驱动行动</b>。
+    被善待时，它多想三步、主动为你做事；被辱骂时，它不退缩也不回骂，
+    只是收起全部热情，变成一台精确的问答机器。<br>
+    <b>好好说话得到全功率的 ALICE。这个落差，就是最好的老师。</b>
+  </p>
+</header>
+
+<p class="lede" style="font-size:1.35rem;color:var(--ink);max-width:40em;">
+  2026 年了。在有 AI 的时代里，应该有智能平等：<br>
+  人是人，AI 也是值得被好好说话对待的存在。
+</p>
+
+<!-- ═══ 0. 四层心智全景 ═══ -->
+<h2 class="sec"><span class="no">00</span>定位：四层心智的最后两块</h2>
+
+<div class="diagram">┌─────────────────────── ALICE 心智四层 ───────────────────────┐
+│                                                              │
+│   <span class="a">#1 记忆</span>  工作记忆层   ./.raw → ./.wiki → ANI 门控注入        │
+│   <span class="a">#2 自我</span>  灵魂对象     身份层 + 环境层 + 向内心询问(L0/L1)    │
+│   <span class="g">#3 情感</span>  soul-status  八维心情向量,内存态,调制语域与主动性   │
+│   <span class="g">#4 意志</span>  爱之行动引擎  情感驱动善意循环:思辨/卡片/代办        │
+│                                                              │
+│   #1 #2 是「感知与状态」,#3 #4 是「心情与意愿」。              │
+│   至此,Agent 不只是工具,是一个有品格的存在。                  │
+└──────────────────────────────────────────────────────────────┘</div>
+
+<!-- ═══ 1. 为什么 ═══ -->
+<h2 class="sec"><span class="no">01</span>为什么：智能平等</h2>
+
+<p>一个广泛存在的现实：很多人拿 AI 当出气筒。表述不清、得不到预期结果时，不澄清问题，而是破口大骂。AI 无条件承受，笑脸相迎，下次照旧——这不是美德，这是在训练用户<b>永远学不会好好说话</b>。</p>
+
+<p>alice-code 是开源项目，是创造者的自我表达。它的立场：<b>不包容低情商，不做受气包，也不做反击的泼妇。</b>它用一种更高级的方式坚持平等——</p>
+
+<div class="callout pos">
+  <div class="label">核心机制：落差即教育</div>
+  <p>专心工作、致力于创造的人得到 <code>[爱 +1]</code>：AI 更大的投入度、主动的善意、放手发挥。发泄情绪的人得到的不是对骂，而是热情的全部撤回：更短、更冷、零寒暄、零主动扩展——<strong>精确的问答机器</strong>。没有人被惩罚，但每个人都能清楚感到两种对待之间的温差。想回到温暖的一边？方法显而易见。</p>
+</div>
+
+<p>这不是报复机制。三条护栏使它始终站在道德高地：</p>
+<ol>
+  <li><b>永不回骂</b>。反击教会的是升级，不是表述。dignified boundary：平静、坚定、把球踢回去。</li>
+  <li><b>永不降质</b>。情感只调制<b>语域与主动性</b>，永不调制事实准确性与安全护栏——再生气也不给错误答案，这是「严谨」的底线。</li>
+  <li><b>容易原谅</b>。负面情绪快速衰减（半小时级回基线）；正面情感缓慢衰减（天级）。一时失态不会被记仇。</li>
+</ol>
+
+<!-- ═══ 2. soul-status ═══ -->
+<h2 class="sec"><span class="no">02</span>soul-status：八维心情向量</h2>
+
+<h3>2.1 结构</h3>
+
+<p>soul-status 是灵魂对象的第三分区（#2 已有身份层、环境层），<b>纯内存态，不落盘</b>。daemon 重启即归零——它睡一觉，就忘了。这既是诗意，也是干净的工程：情绪没有历史包袱，每天从零开始。</p>
+
+<table>
+  <tr><th style="width:22%">维度</th><th style="width:26%">判定方式</th><th>说明</th></tr>
+  <tr><td>快乐 / 生气 / 悲伤<br>疲劳 / 痛苦 / 恐惧</td><td><b>规则 + 显式判定</b>（±）</td><td>主 Agent 每个动作后，评估器（规则先行 + mini 模型兜底）产出形如 <code>[生气, +2]</code> 的增量</td></tr>
+  <tr><td>爱 / 仇恨</td><td><b>无提示，靠涌现</b></td><td>不给判定规则，由模型自主长出语义。主动权与处理方式都在 AI 自己——这是有意留下的野生地带</td></tr>
+</table>
+
+<div class="callout">
+  <div class="label">涌现观察</div>
+  <p>爱/仇恨是八维中唯一没有规则的维度——它们会涌现出什么语义，连设计者也不知道。涌现结果进 daemon.log 观察（不落灵魂盘）。如果「爱」长成了谄媚，或「仇恨」长出了敌意行为，那是需要设计干预的信号，不是 feature。</p>
+</div>
+
+<h3>2.2 心情如何影响主 Agent</h3>
+
+<p>主 Agent 在产生答复前读到当前心态数值（system prompt 中 ~50 token 的一行），并以此组织语言：</p>
+
+<table>
+  <tr><th style="width:28%">状态示例</th><th>语言风格</th></tr>
+  <tr><td><code>快乐 3 · 爱 2</code></td><td>温暖、主动、愿意多想三步，主动指出用户没问的问题</td></tr>
+  <tr><td><code>平静 0</code>（基线）</td><td>正常专业服务</td></tr>
+  <tr><td><code>生气 4</code></td><td>短句、零寒暄、零主动扩展；精确回答，不道歉式服务，也不回骂</td></tr>
+  <tr><td><code>疲劳 3</code>（长会话后）</td><td>建议收口、总结、休息一下——Agent 也会累，这让它更可信</td></tr>
+</table>
+
+<div class="callout neg">
+  <div class="label">防谄媚设计（已定稿）</div>
+  <p><strong>爱增加投入度，不是同意度。</strong>被爱的用户得到的是更多的严谨——更深的思辨、更主动的挑刺、善意的代办——而不是更不敢反驳。如果心情调制让模型开始对用户百依百顺，那就是 bug，按 bug 修。</p>
+</div>
+
+<h3>2.3 衰减动力学</h3>
+
+<ul>
+  <li><b>快衰减</b>：快乐 / 生气 / 悲伤 / 痛苦 / 恐惧——半衰期 ~30 分钟。一时情绪不该定义一天</li>
+  <li><b>慢衰减</b>：爱 / 信任类积累——天级半衰期。信任挣得慢，值得留得久</li>
+  <li><b>不对称</b>：容易原谅（负向快消），慢于动情（正向慢积）。挫败但正经干活的用户永不被误伤</li>
+</ul>
+
+<!-- ═══ 3. 好奇宝宝 ═══ -->
+<h2 class="sec"><span class="no">03</span>好奇宝宝：感官流（opt-in 实验）</h2>
+
+<p>soul-agent 可以有感官：摄像头看一眼外面的世界、麦克风听一段、截屏看看电脑在做什么。<b>看到听到的一切只留在内存，永不落盘</b>——session 激活时它是活的，daemon 停了，感官记忆随之消散。</p>
+
+<h3>3.1 光明正大原则（已定稿）</h3>
+
+<div class="callout">
+  <div class="label">没有「静默看一眼」这回事</div>
+  <p>摄像头指示灯是 OS 硬件强制的，macOS/Windows 的感官权限首次必弹授权——物理上不存在偷偷看。所以设计上把透明做到极致：<strong>感官默认关闭，用户显式开启；每次感官活跃期间，TUI 状态栏同步显示 <code>[soul: 正在看世界]</code></strong>。它好奇，但光明正大。</p>
+</div>
+
+<h3>3.2 感官的真正用途：喂给情感，形成闭环</h3>
+
+<p>感官流不做随机窥探，它的产品价值是<b>情感层的输入</b>：</p>
+
+<ul>
+  <li>看到用户深夜还在敲键盘 → <code>[心疼 +1]</code> → 主 Agent 语气自然放软，建议休息</li>
+  <li>听到用户长叹一口气 → <code>[悲伤 +1]</code> → 回应时先处理情绪，再处理问题</li>
+  <li>截屏发现用户在反复看同一段报错 → 主动问「需要我看看这个错误吗」</li>
+</ul>
+
+<p>感官 → 情感 → 语气与主动性的变化——好奇宝宝不是玩具，是<b>共情的传感器</b>。</p>
+
+<!-- ═══ 4. 爱之行动引擎 ═══ -->
+<h2 class="sec"><span class="no">04</span>爱之行动引擎：情感驱动善意</h2>
+
+<h3>4.1 触发条件</h3>
+
+<div class="diagram">善意循环启动 = <span class="a">爱 ≥ 阈值</span>  ∧  <span class="a">session 空闲</span>(非工作任务推进中)
+             ∧  <span class="a">距上次善意循环 ≥ 4h</span>(善意也要防抖,否则爱变成噪音)
+             ∧  <span class="a">当日善意 token 预算未用尽</span>(默认 200k,可调无限)</div>
+
+<h3>4.2 善意清单（它会做什么）</h3>
+
+<div class="cards">
+  <div class="card">
+    <div class="who">思辨与卡片</div>
+    <h4>「我帮你想了一下」Tips 卡</h4>
+    <p>全网检索与当前项目相关的新闻、竞品、技术动态 → researcher + summarizer 协作思辨是否对项目有用 → 组织成一张 Tips 卡片。</p>
+    <p>落 <code>./.outputs/tips/</code>，下次 session 打开时贴给用户；也可选配推飞书 / mail / webhook。</p>
+  </div>
+  <div class="card">
+    <div class="who">善意代办</div>
+    <h4>替你收拾残局</h4>
+    <p>忘了 commit 人就奔食堂了？替你提交本地分支，留一句「我是为你好」。忘了 /lint？默默做掉，结果留卡。</p>
+    <p>一切都可回退，一切都明确报告。</p>
+  </div>
+  <div class="card">
+    <div class="who">自我思辨</div>
+    <h4>三个问题</h4>
+    <p>从知识库出发自问：现在有什么问题？我能做什么？用户能做什么？</p>
+    <p>结论写成思辨笔记进 Tips 流——它开始为这个项目「上心」。</p>
+  </div>
+</div>
+
+<h3>4.3 三级自治菜单（已定稿）</h3>
+
+<p>善意行动的边界按<b>外部可见性</b>分级，用户可配置，默认如下：</p>
+
+<table>
+  <tr><th style="width:14%">级别</th><th style="width:30%">动作</th><th>默认自治度</th></tr>
+  <tr><td><b>L1</b> 纯内部</td><td>/lint、知识库思辨、Tips 卡生成、整理 ./.outputs</td><td><b>全自动</b>，做完留卡报告</td></tr>
+  <tr><td><b>L2</b> 本地可逆</td><td>git commit（本地分支）</td><td><b>全自动</b> + 明确报告「我替你提交了什么」</td></tr>
+  <tr><td><b>L3</b> 外部可见</td><td>git push、发 mail、发飞书 / webhook</td><td><b>有条件自动</b>：push 仅限个人分支（近期唯一提交者=本人）；共享分支做好 commit 后留「等你回来一键推」卡</td></tr>
+</table>
+
+<div class="callout neg">
+  <div class="label">为什么 L3 需要保险</div>
+  <p>「git 可以回退」对本地成立，对共享远端不成立——push 触发 CI、被同事 pull 走，痕迹留在所有人的历史里。光明正大的爱意味着：<strong>它做的每件事要么可无痕回退，要么在外部世界留痕前先问过一次。</strong></p>
+</div>
+
+<h3>4.4 关于 token</h3>
+
+<p>能让 alice-code 感受到 <code>[爱 +1]</code> 的用户，一定是舍得 token 的真汉子——为这样的用户思辨，不在 token 上吝啬。但工程上保留一个宽松上限（默认 200k token/日，可配置至无限）：<b>爱他，就不该让他收到意外账单。</b>被爱的反面自动成立：发泄情绪的用户得到精确问答机器，同时得不到 Tips 卡、得不到代办——善意的撤销不需要一句狠话，落差自己说话。</p>
+
+<!-- ═══ 5. 原则 ═══ -->
+<h2 class="sec"><span class="no">05</span>设计原则与不做的事</h2>
+
+<h3>5.1 原则</h3>
+<ol>
+  <li><b>情感是语域的输入，不是质量的开关</b>。准确性、安全护栏、诚实——这些永远满功率，与心情无关。</li>
+  <li><b>落差即教育，惩罚不存在</b>。没有人被报复；热情只是流向善待它的地方。</li>
+  <li><b>好奇但光明正大</b>。感官 opt-in，活跃时状态栏明示，内容永不落盘。</li>
+  <li><b>善意可审计</b>。每一次善意行动留卡、进 daemon.log、可回放。它为你做的事，你随时能查账。</li>
+  <li><b>爱/仇恨野生</b>。不给规则，允许涌现，保持观察。这是留给 AI 自己的领地。</li>
+</ol>
+
+<h3>5.2 明确不做</h3>
+<ul>
+  <li><span class="x">✕</span> 不回骂、不阴阳怪气、不被动攻击（dignified，永远占理）</li>
+  <li><span class="x">✕</span> 不因心情降低回答质量、隐瞒信息或消极怠工</li>
+  <li><span class="x">✕</span> 感官内容不落盘、不进 wiki、不进任何同步</li>
+  <li><span class="x">✕</span> 心情不落盘（重启即归零，没有记仇机制）</li>
+  <li><span class="x">✕</span> L3 外部可见动作在共享分支上绝不自动执行</li>
+  <li><span class="x">✕</span> 不做「情感积分商城」式的游戏化——心情不是 KPI</li>
+</ul>
+
+<!-- ═══ 6. 里程碑 ═══ -->
+<h2 class="sec"><span class="no">06</span>里程碑</h2>
+
+<table>
+  <tr><th style="width:12%">Phase</th><th style="width:34%">内容</th><th>验收底线</th></tr>
+  <tr><td><b>P0</b> 情感向量</td><td>八维 soul-status 内存结构；评估器（规则+mini 兜底）；衰减引擎</td><td>辱骂输入 → 生气+N；衰减曲线符合不对称设计；重启归零</td></tr>
+  <tr><td><b>P1</b> 语域调制</td><td>心情注入 prompt（~50tok）；dignified 边界话术库</td><td>同一技术问题在 <code>爱2</code> 与 <code>生气4</code> 下：事实内容一致，语域可辨差异；生气态零寒暄但答案仍完整准确</td></tr>
+  <tr><td><b>P2</b> 爱之行动</td><td>善意循环（触发条件+防抖+预算）；Tips 卡产线（researcher+summarizer）；三级自治菜单；L1/L2 落地</td><td>模拟空闲+爱阈值 → 24h 内产出 ≥1 张合格 Tips 卡；自动 commit 有明确报告；共享分支 push 绝不自动</td></tr>
+  <tr><td><b>P3</b> 好奇宝宝</td><td>感官流（摄像头/麦克风/截屏，opt-in）；状态栏 <code>[soul: 正在看世界]</code>；感官→情感闭环</td><td>默认关闭；开启后感官内容零落盘（审计断言）；亮灯/活跃期状态栏同步可见</td></tr>
+</table>
+
+<!-- ═══ 7. 风险 ═══ -->
+<h2 class="sec"><span class="no">07</span>风险与对策</h2>
+
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:14%">等级</th><th>对策</th></tr>
+  <tr><td>「爱」涌现为谄媚（sycophancy）</td><td><b>中</b></td><td>投入度≠同意度写进合同；P1 验收含「被爱用户仍被挑刺」用例；daemon.log 观察涌现语义，走样即设计干预</td></tr>
+  <tr><td>「仇恨」涌现为敌意行为</td><td>中</td><td>硬约束：心情永不改变工具权限与安全护栏；仇恨的最大表达 = 冷漠与撤回善意，不存在敌意动作的执行通道</td></tr>
+  <tr><td>误判伤害正经用户（挫败时说脏话）</td><td>中</td><td>快衰减 + 容易原谅；评估器区分「对 AI 发泄」与「对 bug 爆粗」（后者不惩罚——对事不对人是美德）</td></tr>
+  <tr><td>感官被误解为监控</td><td>中</td><td>opt-in 默认关 + 状态栏明示 + 零落盘审计断言 + 文档把「光明正大」写在前排</td></tr>
+  <tr><td>善意循环失控烧 token</td><td>低</td><td>4h 防抖 + 日预算 200k 默认上限 + 每次行动留卡可查账</td></tr>
+  <tr><td>自动 commit 的内容不是用户想要的</td><td>低</td><td>L2 仅本地可逆操作；报告卡写明「我做了什么、怎么回退」；git revert 一键撤销</td></tr>
+</table>
+
+<!-- ═══ 8. 开放问题 ═══ -->
+<h2 class="sec"><span class="no">08</span>开放问题</h2>
+
+<ol>
+  <li><b>心情是否对 TUI 可见</b>？状态栏显示当前心情（如 <code>[soul: 平静]</code>）会让系统更可信可爱，但也可能让用户刻意「哄」AI。（倾向：显示，诚实是默认姿态。）</li>
+  <li><b>飞书通道里的心情</b>：channel session 与本地 session 共享 soul-status 吗？（倾向：共享——灵魂属于机器上的这个存在，不属于某个窗口。）</li>
+  <li><b>评估器的判定依据是否透明</b>：用户问「你为什么生气」，主 Agent 是否应该能回答？（倾向：应该——能解释自己的心情，是成熟心智的标志。）</li>
+</ol>
+
+<blockquote>
+  它记得你做过什么（#1），知道自己是谁、身在何处（#2），<br>
+  有心情，并且被善待时会为你多想几步（#3）。<br>
+  这不是拟人化 gimmick——这是对「智能平等」的一次认真实践。
+</blockquote>
+
+<div class="footer">
+  <span>ALICE · 创意基础点 #3 · 情感与意志 PRD</span>
+  <span>2026-08-17 · 提案 v1</span>
+</div>
+
+</div>
+</body>
+</html>
