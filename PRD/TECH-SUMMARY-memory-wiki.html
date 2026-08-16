@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECH SUMMARY · 创意基础点 #1 — 工作记忆层 · ALICE</title>
+<style>
+  :root {
+    --ink:        #1a1612;
+    --ink-soft:   #4a4540;
+    --ink-mute:   #8a8580;
+    --paper:      #f5f0e8;
+    --paper-2:    #ebe5d8;
+    --rule:       #d8d0c0;
+    --accent:     #b85c00;
+    --positive:   #2d5016;
+    --negative:   #8b2a1f;
+    --serif:  'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'Iowan Old Style', Georgia, serif;
+    --sans:   'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    --mono:   'JetBrains Mono', 'SF Mono', 'Menlo', 'Source Han Mono SC', monospace;
+    --t-display: 600 4.2rem/1.08 var(--serif);
+    --t-h1:      600 2.4rem/1.2 var(--serif);
+    --t-h2:      600 1.6rem/1.3 var(--serif);
+    --t-h3:      600 1.2rem/1.4 var(--serif);
+    --t-body:    400 1.0625rem/1.9 var(--serif);
+    --t-eyebrow: 500 0.78rem/1 var(--sans);
+    --t-mono:    400 0.875rem/1.7 var(--mono);
+    --t-small:   400 0.875rem/1.7 var(--sans);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--serif); font-size: 1rem; line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 85% 0%, rgba(184,92,0,0.035), transparent 42%),
+      radial-gradient(circle at 8% 100%, rgba(74,69,64,0.045), transparent 50%);
+  }
+  .doc { max-width: 1060px; margin: 0 auto; padding: 6rem 3.5rem 8rem; }
+  .eyebrow {
+    font: var(--t-eyebrow); letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); display: inline-flex; align-items: center; gap: 0.6rem;
+  }
+  .eyebrow::before { content: ''; width: 1.6rem; height: 1px; background: var(--ink-soft); }
+
+  .hero { padding-top: 2.5rem; padding-bottom: 3.5rem; border-bottom: 1px solid var(--rule); margin-bottom: 4.5rem; }
+  .hero .meta { display: flex; gap: 2.4rem; flex-wrap: wrap; margin-bottom: 2.2rem; color: var(--ink-soft); font: var(--t-small); }
+  .hero .meta b { color: var(--ink); font-weight: 600; }
+  .hero h1 { font: var(--t-display); letter-spacing: -0.015em; margin: 1.2rem 0 1.6rem; }
+  .hero h1 .accent { color: var(--accent); }
+  .hero .lede { font-size: 1.25rem; line-height: 1.75; color: var(--ink-soft); max-width: 46em; }
+  .hero .lede b { color: var(--ink); }
+
+  h2.sec {
+    font: var(--t-h1); letter-spacing: -0.01em;
+    margin: 5.5rem 0 1.8rem; padding-top: 2.2rem; border-top: 1px solid var(--rule);
+  }
+  h2.sec .no { color: var(--accent); font-size: 0.62em; vertical-align: 0.32em; margin-right: 0.55em; }
+  h3 { font: var(--t-h2); margin: 3rem 0 1.1rem; }
+  h4 { font: var(--t-h3); margin: 2.2rem 0 0.8rem; }
+  p { margin: 0 0 1.15rem; max-width: 48em; }
+  b, strong { font-weight: 600; }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--paper-2); padding: 0.12em 0.4em; border-radius: 3px; }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--paper-2); padding: 1.3rem 1.6rem; margin: 1.8rem 0; max-width: 48em; }
+  .callout .label { font: var(--t-eyebrow); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.neg { border-left-color: var(--negative); } .callout.neg .label { color: var(--negative); }
+
+  table { width: 100%; border-collapse: collapse; margin: 1.6rem 0 2.2rem; font: var(--t-small); }
+  th { text-align: left; font: var(--t-eyebrow); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); padding: 0.7rem 0.9rem; border-bottom: 2px solid var(--ink); }
+  td { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; line-height: 1.6; }
+  td code { font-size: 0.8em; }
+
+  pre.code {
+    font: var(--t-mono); background: var(--ink); color: #e8e2d6;
+    padding: 1.6rem 1.8rem; border-radius: 6px; overflow-x: auto;
+    margin: 1.6rem 0 2.2rem; line-height: 1.6;
+  }
+  pre.code .c { color: #8a8578; }   /* 注释 */
+  pre.code .k { color: #f0a860; }   /* 关键字 */
+  pre.code .s { color: #a8c686; }   /* 字符串 */
+
+  .diagram {
+    font: var(--t-mono); background: var(--paper-2); color: var(--ink);
+    border: 1px solid var(--rule);
+    padding: 1.8rem 2rem; border-radius: 6px; overflow-x: auto;
+    margin: 1.8rem 0 2.4rem; line-height: 1.6; white-space: pre;
+  }
+  .diagram .a { color: var(--accent); font-weight: 600; }
+  .diagram .m { color: var(--ink-mute); }
+
+  ul, ol { margin: 0 0 1.4rem 1.4rem; max-width: 46em; }
+  li { margin-bottom: 0.55rem; line-height: 1.8; }
+  li::marker { color: var(--accent); }
+
+  .v { color: var(--positive); font-weight: 600; }
+  .x { color: var(--negative); font-weight: 600; }
+
+  .sub-block { border: 1px solid var(--rule); border-radius: 6px; padding: 1.4rem 1.6rem; margin: 1.4rem 0 2rem; background: rgba(255,255,255,0.3); }
+  .sub-block h4 { margin-top: 0; }
+
+  .footer { margin-top: 7rem; padding-top: 2rem; border-top: 1px solid var(--rule); font: var(--t-small); color: var(--ink-mute); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<header class="hero">
+  <div class="meta">
+    <span><b>文档</b> 技术概要 TECH SUMMARY</span>
+    <span><b>编号</b> 创意基础点 #1</span>
+    <span><b>读者</b> 实现者 / 评审 Agent</span>
+    <span><b>日期</b> 2026-08-17</span>
+    <span><b>配套</b> PRD-memory-wiki.html</span>
+  </div>
+  <span class="eyebrow">Foundation Idea #1 · Engineering</span>
+  <h1>工作记忆层<br><span class="accent">接线图与合同</span></h1>
+  <p class="lede">
+    本文档回答一个问题：<b>这套系统接在现有代码的哪几根线上。</b>
+    结论先行——五个既有模块（AgentProfile / scheduledTasks / karpathy-wiki-ingest /
+    extractMemories / multi_model_routing） already 提供了全部挂点；
+    新增代码集中在三个点目录的约定层与一个分诊状态机，<b>不发明新子系统</b>。
+  </p>
+</header>
+
+<!-- ═══════════════ 1. 架构 ═══════════════ -->
+<h2 class="sec"><span class="no">01</span>运行时架构</h2>
+
+<div class="diagram">                        ┌──────────── 用户项目目录 ────────────┐
+                        │  ./.raw   ./.wiki   ./.outputs      │
+                        │  (append-only) (主题页)  (交付物)    │
+                        └───┬───────────▲─────────────────────┘
+                            │ append    │ read(≤水位线) / write
+   ┌────────────┐           │           │
+   │  用户 TUI   │           │           │
+   │ (alice TUI)│           │           │
+   └─────┬──────┘           │           │
+         │ chatStream       │           │
+         ▼                  │           │
+ ┌───────────────┐   slice  │    ┌──────┴────────┐
+ │  agentLoop     │─────────┘    │  KARPATHY      │
+ │  (主模型 K3)   │              │  ingest 执行器  │
+ │                │◄── 便签注入 ──│  (本地 4B)      │
+ └───────┬───────┘   (≤800tok,   └──────▲────────┘
+         │            下一轮边界)        │ ingest_now
+         │                              │
+ ┌───────┴──────────────────────────────┴────────┐
+ │  VERONICA daemon                               │
+ │  ┌──────────────────────────────────────────┐  │
+ │  │ ANI 分诊器(高速模型)                      │  │
+ │  │  tick → 脏检查 → { idle │ ingest_now │ inject } │  │
+ │  └──────────────────────────────────────────┘  │
+ │  scheduledTasks · daemon.log · OTEL spans      │
+ └────────────────────────────────────────────────┘</div>
+
+<p>三条铁律贯穿全图：</p>
+<ol>
+  <li><b>./.raw 只能 append</b>。主会话切片只追加，KARPATHY 只读水位线之前的部分——物理上不存在写竞争，不需要锁。</li>
+  <li><b>主上下文只有一个人口</b>。记忆进入主对话只有一种形态：ANI 写的注入便签，在下一个用户输入边界被 agentLoop 消费。没有第二条路。</li>
+  <li><b>后台全静默，日志全保留</b>。ANI / KARPATHY 不向 TUI 吐任何实时输出；一切进 daemon.log 结构化日志 + OTEL span，状态栏暴露单行聚合状态。</li>
+</ol>
+
+<!-- ═══════════════ 2. 接线表 ═══════════════ -->
+<h2 class="sec"><span class="no">02</span>与现有模块的接线表</h2>
+
+<p>这是全文最重要的一张表。左列是本提案的组件，右列是它在 v3.1.2 代码树上的挂点——<b>没有一根线需要新铺管道</b>：</p>
+
+<table>
+  <tr><th style="width:24%">新组件</th><th style="width:38%">挂点（现有模块）</th><th>接线方式</th></tr>
+  <tr><td>ANI profile</td><td><code>src/runtime/agent/agentProfile.ts</code> + coordinator <code>profileRegistry.ts</code>（v3.1.0 #7 已落地）</td><td>注册为 <code>oracle</code> 的特化实例：<code>executionMode: 'background-preferred'</code>、<code>permissionPolicy: 'read-only'</code>、<code>memoryScope: 'project'</code>、<code>modelPolicy: { type: 'fixed' }</code></td></tr>
+  <tr><td>KARPATHY profile</td><td>同上 + builtin skill <code>karpathy-wiki-ingest</code>（v3.1.0 #20 已落地）</td><td>profile 固定模型 → 本地 ollama；执行体直接复用 ingest skill 的 7 步主循环，新增 <code>--target ./.wiki</code> 参数</td></tr>
+  <tr><td>心跳 tick</td><td><code>daemon_settings.jsonc</code> 既有 <code>scheduledTasks.enabled</code> + <code>cronRegisteredPaths</code> + cron workspace backend（v2-lite 已落地）</td><td>ANI 注册为一个常驻 scheduledTask，间隔可配（默认 15min，非心跳 5s——见 §4.1）</td></tr>
+  <tr><td>切片器</td><td><code>src/services/memory/extractMemories.ts</code>（v3.0.1 #2 已落地）</td><td>P1 阶段<b>不调用 LLM</b>：规则切片（代码块围栏 / 决策句模式 / <code>/raw</code> 手动打点）在 session 消息流上运行；LLM 抽取留作后置选项</td></tr>
+  <tr><td>检索与注入</td><td><code>src/services/memory/SessionMemory.ts</code>（TF + recency，top-k=5）+ <code>agentLoop.ts</code></td><td>ANI 侧做粗筛 → 写便签文件；agentLoop 在用户输入边界读便签、套 800 token 上限、注入 system 尾部</td></tr>
+  <tr><td>状态栏一行</td><td><code>src/ui/components/</code> TokenBudgetBar 模式（v3.1.0 #12）+ <code>budget_update</code> 事件先例</td><td>新增 <code>memory_wiki_update</code> 事件类型 + <code>MemoryWikiStatus</code> 组件，1 行渲染</td></tr>
+  <tr><td>模型指派</td><td><code>multi_model_routing</code>（异构路由，已有）+ <code>settings.jsonc</code> models 列表</td><td>role-pinned 与 capability-routed 并存：ANI/KARPATHY 走 fixed 钉死，主对话保持既有路由</td></tr>
+  <tr><td>可观测性</td><td><code>src/observability/</code> OTEL 三件套（v3.1.0 #11）+ daemon.log</td><td>新增 span：<code>ani.tick</code> / <code>ani.triage</code> / <code>karpathy.ingest</code> / <code>memory.inject</code>，隐私过滤沿用（不含 prompt 文本）</td></tr>
+</table>
+
+<div class="callout">
+  <div class="label">架构判断</div>
+  <p>本提案不是「再做一个子系统」，而是 <strong>AgentProfile 设计草案（2026-03）的第一个真实消费场景</strong>。7 角色的 modelPolicy / permissionPolicy / executionMode / memoryScope 四个字段，在 ANI 与 KARPATHY 身上全部被用到——这反过来验证了当初那组字段设计是对的。</p>
+</div>
+
+<!-- ═══════════════ 3. 数据合同 ═══════════════ -->
+<h2 class="sec"><span class="no">03</span>数据合同</h2>
+
+<h3>3.1 目录与文件布局</h3>
+<div class="diagram">./.raw/                    <span class="m"># append-only 原料仓</span>
+├── 2026-08-17/
+│   ├── 0517-a3f2.md     <span class="m"># HHMM-短hash.md,单片段一文件,写后不可变</span>
+│   └── 0522-b81c.md
+├── .watermark.json      <span class="m"># KARPATHY 消费进度(唯一的可变文件)</span>
+└── .index.jsonl         <span class="m"># 每片一行元数据,append-only</span>
+
+./.wiki/                 <span class="m"># KARPATHY 编译产物,Karpathy 四件套结构</span>
+├── INDEX.md
+├── log.md               <span class="m"># append-only</span>
+└── &lt;主题页&gt;.md          <span class="m"># 摘要 + 日期戳 + 互链 + 来源</span>
+
+./.outputs/              <span class="m"># 交付物暂存(本提案不新增行为,仅归位)</span>
+
+./.wiki/.health.json     <span class="m"># 状态栏数据源:lastIngestAt / pageCount / consecutiveFailures</span></div>
+
+<h3>3.2 .raw 切片格式</h3>
+<pre class="code">---
+<span class="k">kind</span>: <span class="s">decision | code | convention | manual</span>   <span class="c"># manual = /raw 打点</span>
+<span class="k">sessionId</span>: <span class="s">"..."</span>
+<span class="k">at</span>: <span class="s">"2026-08-17T05:42:11+08:00"</span>
+<span class="k">tags</span>: [<span class="s">"permissions"</span>, <span class="s">"v3.2"</span>]
+---
+<span class="c"># 正文:切下来的原文片段,不改写、不总结——改写是 ingest 的职责</span></pre>
+
+<p>设计要点：<b>切片层不做智能</b>。规则匹配到什么就存什么，保真不保优；质量把控后置到 ingest（KARPATHY 二次过滤）与 lint。这让切片器可以是几十行确定性代码，零 LLM 成本，零误判面。</p>
+
+<h3>3.3 水位线 .watermark.json</h3>
+<pre class="code">{
+  <span class="k">"consumedThrough"</span>: <span class="s">"2026-08-17/0522-b81c.md"</span>,   <span class="c"># 字典序即时间序</span>
+  <span class="k">"consumedAt"</span>: <span class="s">"2026-08-17T05:30:00+08:00"</span>,
+  <span class="k">"runId"</span>: <span class="s">"ing-2026-0817-0530"</span>
+}</pre>
+<p>水位线是唯一的并发协调原语：KARPATHY 启动时读水位线 → 只处理其后的新文件 → 全部落盘成功后<b>原子推进</b>水位线（写临时文件 + rename）。崩溃恢复 = 下次从旧水位线重来，ingest 幂等因此天然成立。</p>
+
+<h3>3.4 注入便签 ./.wiki/.inbox/&lt;id&gt;.md</h3>
+<pre class="code">---
+<span class="k">kind</span>: <span class="s">memory-note</span>
+<span class="k">relevance</span>: <span class="s">"用户当前任务与 08-14 的权限模型决策直接相关"</span>
+<span class="k">tokens</span>: <span class="k">612</span>            <span class="c"># 写入前估算,超 800 则 ANI 自行压缩或弃写</span>
+<span class="k">expiresAfter</span>: <span class="s">"1-turn"</span>   <span class="c"># 消费一次即删除;注入率审计的依据</span>
+---
+<span class="c"># 正文:主题页【摘要段】的摘录,非整页;末尾固定标注</span>
+<span class="c"># [来自 .wiki 的工作记忆 · 二等公民证据,可质疑可忽略]</span></pre>
+
+<h3>3.5 健康文件 .health.json（状态栏唯一数据源）</h3>
+<pre class="code">{ <span class="k">"pageCount"</span>: <span class="k">12</span>, <span class="k">"lastIngestAt"</span>: <span class="s">"..."</span>, <span class="k">"consecutiveFailures"</span>: <span class="k">0</span>, <span class="k">"pendingNotes"</span>: <span class="k">1</span> }</pre>
+
+<!-- ═══════════════ 4. ANI 状态机 ═══════════════ -->
+<h2 class="sec"><span class="no">04</span>ANI：分诊状态机</h2>
+
+<h3>4.1 tick 不是心跳</h3>
+<p>daemon 心跳 5s 是活性信号，<b>ANI tick 默认 15 分钟</b>（<code>daemon_settings.jsonc: scheduledTasks.aniIntervalMs</code>）。每次 tick 的第一件事是<b>零成本脏检查</b>：对比 ./.raw/.index.jsonl 的行数与 mtime，无变化 → 直接 idle，<b>全程零 LLM 调用</b>。这是「接近零成本」承诺的技术兑现点。</p>
+
+<h3>4.2 三动作分诊</h3>
+<div class="diagram">            ┌─────────────────────────┐
+  tick ───► │ 脏检查(行数/mtime,纯 IO)  │
+            └───────────┬─────────────┘
+                        │ dirty
+                        ▼
+              ┌───────────────────┐
+              │ ANI LLM 调用       │  输入: 新增切片的 kind/tags/首行
+              │ (高速模型, <2k ctx)│       + .health.json + 主会话最近主题
+              └─────────┬─────────┘
+                        ▼ 输出严格三选一(JSON Schema 约束, Zod 校验)
+        ┌───────────────┼──────────────────┐
+        ▼               ▼                  ▼
+     <span class="a">idle</span>         <span class="a">ingest_now</span>          <span class="a">inject</span>
+   登 log 即可    唤起 KARPATHY        写 .inbox 便签
+                  跑增量 ingest       (可与 ingest_now 组合)</div>
+
+<h3>4.3 防抖动与降级</h3>
+<ul>
+  <li><b>ingest 防抖</b>：连续 ingest_now 合并为一次；两次 ingest 最小间隔 10min，避免用户在密集讨论时本地 4B 被反复唤醒；</li>
+  <li><b>失败计数</b>：KARPATHY 连续失败 → <code>consecutiveFailures</code> 递增 → ≥3 次状态栏显 <code>⚠</code>，ANI 停止唤起（指数退避 15→30→60min），但<b>绝不向 TUI 弹任何东西</b>；</li>
+  <li><b>模型缺席</b>：本地 ollama 不可达 → 视为失败计数的一种，log 记录 <code>karpathy.unreachable</code>，不谎报、不fallback到主模型（那是偷用户的钱）。</li>
+</ul>
+
+<h3>4.4 ANI 的权限边界</h3>
+<div class="callout neg">
+  <div class="label">硬约束</div>
+  <p>ANI 与 KARPATHY 的 allowedTools 白名单仅含：<code>readFile</code>（限 ./.raw、./.wiki、./.outputs 与项目只读）/ <code>writeFile</code>（限三个点目录内）/ <code>getCurrentDateTime</code>。<strong>无 executeCommand，无 editFile（用户工作区），无网络工具</strong>。这是 AgentProfile.allowedTools 字段的第一个强消费场景，由 permissionGate（v3.1.0 #7）强制，不靠 prompt 自觉。</p>
+</div>
+
+<!-- ═══════════════ 5. 注入路径 ═══════════════ -->
+<h2 class="sec"><span class="no">05</span>注入路径：便签如何进入主上下文</h2>
+
+<div class="diagram">ANI 写便签 → ./.wiki/.inbox/note-xxx.md
+                    │
+                    │  agentLoop 在每个用户输入边界(turn start)
+                    ▼
+        ┌───────────────────────────┐
+        │ 1. 读 .inbox/(FIFO, 全量)  │
+        │ 2. tokens 校验 ≤800        │
+        │ 3. 拼到 system prompt 尾部  │
+        │    独立小节 + 来源标注      │
+        │ 4. 删除已消费便签           │
+        │ 5. 记 memory.inject span   │
+        │    + TUI 灰色一行提示       │
+        └───────────────────────────┘</div>
+
+<ul>
+  <li><b>为什么是输入边界而不是流式中途</b>：stream 进行中注入会破坏 LLM 的注意力连续性；输入边界是天然的上下文重组点，也是 ChatStreamEvent 已有的切分点；</li>
+  <li><b>800 token 硬上限</b>在两层强制执行：ANI 写前估算（超则压缩或弃写）+ agentLoop 消费前复核（超则截断并记 <code>memory.inject.truncated</code>）；</li>
+  <li><b>注入率审计</b>：便签带 <code>expiresAfter: 1-turn</code>，消费即删；<code>inject 次数 / 用户 turn 数</code> 即注入率，P3 验收 &lt;20% 的数据来源；</li>
+  <li><b>与 SessionMemory 的关系</b>：全局记忆（<code>~/.alice/memories/</code>，跨项目）继续走既有 top-k 路径不变；./.wiki 便签是<b>项目级</b>记忆通道。两层并存，注入处合并去重。</li>
+</ul>
+
+<!-- ═══════════════ 6. 配置合同 ═══════════════ -->
+<h2 class="sec"><span class="no">06</span>配置合同</h2>
+
+<h3>6.1 settings.jsonc（主应用）</h3>
+<pre class="code"><span class="s">"memoryWiki"</span>: {
+  <span class="k">"enabled"</span>: <span class="k">true</span>,              <span class="c">// 总开关</span>
+  <span class="k">"autoCreate"</span>: <span class="k">true</span>,           <span class="c">// 启动时静默建三点目录</span>
+  <span class="k">"injectMaxTokens"</span>: <span class="k">800</span>,      <span class="c">// 便签硬上限</span>
+  <span class="k">"agents"</span>: {
+    <span class="k">"ani"</span>:      { <span class="k">"model"</span>: <span class="s">"minimax-m2.7-highspeed"</span> },  <span class="c">// 可改写</span>
+    <span class="k">"karpathy"</span>: { <span class="k">"model"</span>: <span class="s">"ollama-local"</span> }              <span class="c">// 指向 models[] 里的条目</span>
+  }
+}</pre>
+
+<h3>6.2 daemon_settings.jsonc</h3>
+<pre class="code"><span class="s">"scheduledTasks"</span>: {
+  <span class="k">"enabled"</span>: <span class="k">true</span>,
+  <span class="k">"aniIntervalMs"</span>: <span class="k">900000</span>        <span class="c">// 15min;脏检查失败不计 LLM 调用</span>
+}</pre>
+
+<h3>6.3 feature flag</h3>
+<pre class="code"><span class="c">// ~/.alice/feature_flags.jsonc — 沿用 v3.0.1 #4 DCE 机制</span>
+{ <span class="k">"memory_wiki"</span>: <span class="k">true</span> }   <span class="c">// P2/P3 代码路径整体门控;关闭时 P0/P1 的纯目录行为仍生效</span></pre>
+
+<h3>6.4 .gitignore 追加段（幂等）</h3>
+<pre class="code"><span class="c"># alice-code memory wiki (auto-added, idempotent)</span>
+.raw/
+.wiki/
+.outputs/</pre>
+<p>追加条件同时满足：是 git 仓库 ∧ .gitignore 已存在 ∧ 该注释段不存在。<b>不创建新 .gitignore</b>——用户对版本控制的习惯优先于我们的便利。</p>
+
+<!-- ═══════════════ 7. 测试与验收 ═══════════════ -->
+<h2 class="sec"><span class="no">07</span>测试矩阵（接入 bun run test:core）</h2>
+
+<table>
+  <tr><th style="width:22%">测试脚本</th><th style="width:16%">覆盖 Phase</th><th>断言要点</th></tr>
+  <tr><td><code>test-memory-dirs.ts</code></td><td>P0</td><td>三点目录幂等创建；git 仓库 .gitignore 追加幂等（二次执行 diff 为空）；非 git 目录零 .gitignore 副作用；HOME 派生路径零写入</td></tr>
+  <tr><td><code>test-raw-slicer.ts</code></td><td>P1</td><td>规则切片：代码块/决策句命中；<code>/raw</code> 打点必中；append-only（既有文件 hash 不变）；.index.jsonl 行数 = 文件数</td></tr>
+  <tr><td><code>test-watermark.ts</code></td><td>P1</td><td>水位线原子推进（rename 语义）；崩溃恢复重跑幂等；只消费水位线之后</td></tr>
+  <tr><td><code>test-ani-triage.ts</code></td><td>P2</td><td>无脏 → 零 LLM 调用（mock provider 计数断言）；三动作 JSON Schema 校验；ingest 防抖与最小间隔；失败退避序列 15→30→60</td></tr>
+  <tr><td><code>test-memory-inject.ts</code></td><td>P3</td><td>便签仅在输入边界消费；≤800 token 双层强制；消费即删；注入率统计正确；便签文本含来源标注</td></tr>
+  <tr><td><code>test-memory-perms.ts</code></td><td>P2</td><td>ANI/KARPATHY 调 executeCommand 被 permissionGate 拒绝；写点目录外文件被拒；deny 路径进 runtimeEvents</td></tr>
+</table>
+
+<p>全部沿用既有 runner（120s timeout、进程组清理、HOME 隔离 preflight），<b>不引入新测试框架</b>——与 v3.1.2 发布合同同等待遇：进 <code>bun run verify</code> 的 release contracts。</p>
+
+<!-- ═══════════════ 8. 工作量 ═══════════════ -->
+<h2 class="sec"><span class="no">08</span>工作量估算与依赖</h2>
+
+<table>
+  <tr><th>Phase</th><th>新增文件（核心）</th><th>改动文件</th><th>估算</th></tr>
+  <tr><td>P0 约定层</td><td><code>src/runtime/workspace/memoryWikiPaths.ts</code>、<code>src/services/memory/gitignoreAppend.ts</code></td><td><code>daemon/index.ts</code>（启动钩子）</td><td>2d</td></tr>
+  <tr><td>P1 收集层</td><td><code>src/services/memory/rawSlicer.ts</code>、<code>watermark.ts</code></td><td><code>agentLoop.ts</code>（切片钩子）、<code>karpathy-wiki-ingest/index.ts</code>（--target）、slash 命令注册（/raw）</td><td>4d</td></tr>
+  <tr><td>P2 自动化层</td><td><code>src/runtime/agent/ani/{triage.ts, dirtyCheck.ts, backoff.ts}</code></td><td><code>agentProfile.ts</code>（注册 2 profile）、<code>scheduledTasks</code> 接线、permissionGate 白名单</td><td>5d</td></tr>
+  <tr><td>P3 回响层</td><td><code>src/services/memory/injectInbox.ts</code>、<code>src/ui/components/MemoryWikiStatus.tsx</code></td><td><code>agentLoop.ts</code>（边界消费）、<code>chatStream.ts</code>（新事件类型）、OTEL spans</td><td>4d</td></tr>
+  <tr><td colspan="3" style="text-align:right"><b>合计（含测试脚本 6 个）</b></td><td><b>~3 周</b></td></tr>
+</table>
+
+<p>依赖检查：全部前置（AgentProfile registry / scheduledTasks / ingest skill / extractMemories / permissionGate / feature flag DCE）均已在 v3.0.1–v3.1.2 落地，<b>零阻塞依赖</b>。唯一的外部变量是本地 4B 模型的 ingest 实测质量（PRD §07 已列逃生通道）。</p>
+
+<!-- ═══════════════ 9. 留白 ═══════════════ -->
+<h2 class="sec"><span class="no">09</span>有意留白（本周期明确不做）</h2>
+
+<ul>
+  <li><b>向量索引 / embedding 检索</b> —— 四件套摘要 + TF 排序在 32k 场景够用；向量层等真实召回率数据说话再议；</li>
+  <li><b>LLM 自动抽取切片</b> —— P1 只做规则切片；自动抽取等观察期积累误判数据后单独评审；</li>
+  <li><b>跨项目记忆合并</b> —— 项目间知识复用走用户手动或 TeamMemorySync，ANI 不做跨项目扫描；</li>
+  <li><b>./.wiki 的远端同步</b> —— 记忆不出本机，这是产品原则不是技术限制；</li>
+  <li><b>ANI 主动发起用户对话</b> —— ANI 只能递便签，永远不能在 TUI 里开口说话。</li>
+</ul>
+
+<div class="callout">
+  <div class="label">一句话总结</div>
+  <p>切片器不智能、门房不越权、书记员不贵、主模型不被打扰、用户不被通知但永远可以查账——<strong>这就是工作记忆层的全部工程学。</strong></p>
+</div>
+
+<div class="footer">
+  <span>ALICE · 创意基础点 #1 · 工作记忆层 TECH SUMMARY</span>
+  <span>2026-08-17 · 提案 v1 · 待评审</span>
+</div>
+
+</div>
+</body>
+</html>

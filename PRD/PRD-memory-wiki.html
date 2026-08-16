@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD · 创意基础点 #1 — 工作记忆层 · ALICE</title>
+<style>
+  :root {
+    --ink:        #1a1612;
+    --ink-soft:   #4a4540;
+    --ink-mute:   #8a8580;
+    --paper:      #f5f0e8;
+    --paper-2:    #ebe5d8;
+    --rule:       #d8d0c0;
+    --accent:     #b85c00;
+    --accent-ink: #f5f0e8;
+    --positive:   #2d5016;
+    --negative:   #8b2a1f;
+    --serif:  'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'Iowan Old Style', Georgia, serif;
+    --sans:   'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+    --mono:   'JetBrains Mono', 'SF Mono', 'Menlo', 'Source Han Mono SC', monospace;
+    --t-display: 600 4.6rem/1.08 var(--serif);
+    --t-h1:      600 2.6rem/1.18 var(--serif);
+    --t-h2:      600 1.75rem/1.28 var(--serif);
+    --t-h3:      600 1.25rem/1.4 var(--serif);
+    --t-body:    400 1.0625rem/1.9 var(--serif);
+    --t-eyebrow: 500 0.78rem/1 var(--sans);
+    --t-mono:    400 0.875rem/1.7 var(--mono);
+    --t-small:   400 0.875rem/1.7 var(--sans);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--serif); font-size: 1rem; line-height: 1.9;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(184,92,0,0.035), transparent 42%),
+      radial-gradient(circle at 92% 100%, rgba(74,69,64,0.045), transparent 50%);
+  }
+  .doc { max-width: 1060px; margin: 0 auto; padding: 6rem 3.5rem 8rem; }
+  .eyebrow {
+    font: var(--t-eyebrow); letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); display: inline-flex; align-items: center; gap: 0.6rem;
+  }
+  .eyebrow::before { content: ''; width: 1.6rem; height: 1px; background: var(--ink-soft); }
+
+  .hero { padding-top: 2.5rem; padding-bottom: 3.5rem; border-bottom: 1px solid var(--rule); margin-bottom: 4.5rem; }
+  .hero .meta { display: flex; gap: 2.4rem; flex-wrap: wrap; margin-bottom: 2.2rem; color: var(--ink-soft); font: var(--t-small); }
+  .hero .meta b { color: var(--ink); font-weight: 600; }
+  .hero h1 { font: var(--t-display); letter-spacing: -0.015em; margin: 1.2rem 0 1.6rem; }
+  .hero h1 .accent { color: var(--accent); }
+  .hero .lede { font-size: 1.3rem; line-height: 1.75; color: var(--ink-soft); max-width: 44em; }
+  .hero .lede b { color: var(--ink); }
+
+  h2.sec {
+    font: var(--t-h1); letter-spacing: -0.01em;
+    margin: 5.5rem 0 1.8rem; padding-top: 2.2rem; border-top: 1px solid var(--rule);
+  }
+  h2.sec .no { color: var(--accent); font-size: 0.62em; vertical-align: 0.32em; margin-right: 0.55em; letter-spacing: 0.05em; }
+  h3 { font: var(--t-h2); margin: 3rem 0 1.1rem; }
+  h4 { font: var(--t-h3); margin: 2.2rem 0 0.8rem; }
+  p { margin: 0 0 1.15rem; max-width: 46em; }
+  p.lede { font-size: 1.15rem; color: var(--ink-soft); }
+  b, strong { font-weight: 600; }
+  code {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--paper-2); padding: 0.12em 0.4em; border-radius: 3px;
+  }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--paper-2);
+    padding: 1.3rem 1.6rem; margin: 1.8rem 0; max-width: 46em;
+  }
+  .callout .label { font: var(--t-eyebrow); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.neg { border-left-color: var(--negative); }
+  .callout.neg .label { color: var(--negative); }
+  .callout.pos { border-left-color: var(--positive); }
+  .callout.pos .label { color: var(--positive); }
+
+  table { width: 100%; border-collapse: collapse; margin: 1.6rem 0 2.2rem; font: var(--t-small); }
+  th { text-align: left; font: var(--t-eyebrow); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); padding: 0.7rem 0.9rem; border-bottom: 2px solid var(--ink); }
+  td { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; line-height: 1.65; }
+  tr:hover td { background: rgba(184,92,0,0.03); }
+  td code { font-size: 0.82em; }
+
+  .diagram {
+    font: var(--t-mono); background: var(--ink); color: #e8e2d6;
+    padding: 1.8rem 2rem; border-radius: 6px; overflow-x: auto;
+    margin: 1.8rem 0 2.4rem; line-height: 1.65; white-space: pre;
+  }
+  .diagram .a { color: #f0a860; }
+  .diagram .m { color: #9a93a8; }
+
+  ul, ol { margin: 0 0 1.4rem 1.4rem; max-width: 44em; }
+  li { margin-bottom: 0.55rem; line-height: 1.8; }
+  li::marker { color: var(--accent); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin: 1.8rem 0 2.4rem; }
+  .card { border: 1px solid var(--rule); background: rgba(255,255,255,0.35); padding: 1.5rem 1.6rem; border-radius: 6px; }
+  .card .who { font: var(--t-eyebrow); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.7rem; }
+  .card h4 { margin: 0 0 0.6rem; }
+  .card p { font: var(--t-small); color: var(--ink-soft); margin-bottom: 0.5rem; }
+  .card p:last-child { margin-bottom: 0; }
+
+  .v { color: var(--positive); font-weight: 600; }
+  .x { color: var(--negative); font-weight: 600; }
+
+  blockquote {
+    margin: 2rem 0; padding: 0.2rem 0 0.2rem 1.6rem;
+    border-left: 2px solid var(--ink-mute); color: var(--ink-soft);
+    font-style: italic; max-width: 44em;
+  }
+
+  .footer { margin-top: 7rem; padding-top: 2rem; border-top: 1px solid var(--rule); font: var(--t-small); color: var(--ink-mute); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<header class="hero">
+  <div class="meta">
+    <span><b>文档</b> 产品需求说明 PRD</span>
+    <span><b>编号</b> 创意基础点 #1</span>
+    <span><b>状态</b> 提案 · 待评审</span>
+    <span><b>日期</b> 2026-08-17</span>
+    <span><b>配套</b> TECH-SUMMARY-memory-wiki.html</span>
+  </div>
+  <span class="eyebrow">Foundation Idea #1</span>
+  <h1>工作记忆层<br><span class="accent">Memory Wiki</span></h1>
+  <p class="lede">
+    让对接<b>任意小上下文开源模型</b>的 alice-code，拥有项目级的、自动生长的长期记忆——
+    用户什么都不用做，知识库在 <b>./.wiki</b> 里自己长出来；
+    一个静默的中断代理 <b>ANI</b> 决定什么时候、把哪一小段记忆，递给主模型。
+  </p>
+</header>
+
+<!-- ═══════════════ 0. 一句话 ═══════════════ -->
+<p class="lede" style="font-size:1.35rem; color:var(--ink); max-width:40em;">
+  上下文窗口是租来的，工作记忆是自己的。<br>
+  本提案为 alice-code 增加一层<b>项目级工作记忆</b>：对话中有意义的片段被自动切片归档，
+  由常驻代理在后台编译成结构化知识库，并在——且仅在——必要时注入主对话。
+</p>
+
+<!-- ═══════════════ 1. 问题 ═══════════════ -->
+<h2 class="sec"><span class="no">01</span>问题：32k 的房间里做不成大项目</h2>
+
+<p>alice-code 的产品承诺是<b>对接不可预知的开源模型组合</b>。这带来一个结构性约束：用户本地跑得起、跑得快的模型，上下文往往只有 32k 甚至更小。而真实的大型任务——重构一个仓库、写一份产品文档、维护一个跨周的项目——所需的工作记忆远超这个窗口。</p>
+
+<p>当前系统里，会话结束即失忆。用户第二天回来，要重新解释项目背景、重新粘贴约定、重新讲一遍三天前已经讨论清楚的决策。<b>模型没有变笨，是记忆没有留下。</b></p>
+
+<h3>三个并存的现实</h3>
+<table>
+  <tr><th style="width:26%">现实</th><th>含义</th></tr>
+  <tr><td>上下文是稀缺资源</td><td>32k 窗口里每一千 token 都宝贵，粗暴的 RAG 式全文注入反而稀释注意力</td></tr>
+  <tr><td>智能是异构的</td><td>用户的环境里同时存在高智力云模型（Kimi-K3 级）、低成本高速模型（minimax 级）、本地小模型（qwen3-4B 级）——它们的价格/能力差一个数量级</td></tr>
+  <tr><td>记忆必须属于用户</td><td>按产品原则，记忆落在本地文件，不上传、不外发、不绑定任何账号体系</td></tr>
+</table>
+
+<div class="callout">
+  <div class="label">核心洞察</div>
+  <p>小上下文模型的短板不在「智力」，在「记忆跨度」。如果记忆的<b>收集、整理、提纯</b>可以下沉给低成本模型在后台完成，主模型只需要在正确的时间收到一页摘要——32k 的窗口就足够装下大项目的全貌。</p>
+</div>
+
+<!-- ═══════════════ 2. 方案总览 ═══════════════ -->
+<h2 class="sec"><span class="no">02</span>方案：三个角色，三个点目录，一扇门</h2>
+
+<h3>2.1 角色剧</h3>
+<div class="cards">
+  <div class="card">
+    <div class="who">主模型 · 编排者</div>
+    <h4>如 Kimi-K3（高智力云模型）</h4>
+    <p>主导对话与编排。它的上下文默认是干净的——不背历史包袱，不被检索噪音稀释。</p>
+    <p>只在 ANI 敲门时，收到一张不超过 800 token 的记忆便签。</p>
+  </div>
+  <div class="card">
+    <div class="who">ANI · 门房 / 中断器</div>
+    <h4>如 minimax-m2.7-highspeed（低成本高速）</h4>
+    <p><b>A</b>utonomous <b>N</b>otice <b>I</b>ntERRUPT —— 自主感知中断。daemon 心跳节拍上的分诊代理，类比 MS-DOS 时代的 int 1ch。</p>
+    <p>扫一眼增量，做三选一分诊：静默 / 唤起整理 / 向主模型递便签。单次调用上下文极小，成本可忽略。</p>
+  </div>
+  <div class="card">
+    <div class="who">KARPATHY · 书记员</div>
+    <h4>如本地 ollama qwen3-4B（零成本）</h4>
+    <p>专职文档处理：把 ./.raw 里的素材切片编译进 ./.wiki 主题页，维护摘要与互链，接受 lint 体检。</p>
+    <p>写得不好没关系——失败廉价，下轮重写，lint 兜底。</p>
+  </div>
+</div>
+
+<h3>2.2 数据驻地：三个隐藏点目录</h3>
+<div class="diagram">项目根/
+├── <span class="a">./.raw</span>       <span class="m">← 对话切片，append-only，只进不出（原料仓）</span>
+├── <span class="a">./.wiki</span>      <span class="m">← KARPATHY 编译产物，主题页四件套（成品仓）</span>
+├── <span class="a">./.outputs</span>   <span class="m">← 报告/导出等待交付物（暂存仓）</span>
+└── .gitignore  <span class="m">← 若已存在，幂等追加三行；不存在则不创建</span></div>
+
+<ul>
+  <li><b>点目录是系统级工作区</b>，遵循 .git / .vscode / .claude 的通行约定，对用户项目零视觉污染；</li>
+  <li><b>默认不进版本控制</b>：检测到 git 仓库且 .gitignore 已存在时，以注释段幂等追加；不擅自创建 .gitignore，不在非 git 目录做任何版本控制假设；</li>
+  <li><b>与用户亲手经营的 ./wiki（非隐藏，karpathy-wiki-new 所建）刻意分离</b>：那是用户刻意的知识资产，进 git；这是系统的工作记忆，不进 git。两套并存，互不合并。</li>
+</ul>
+
+<h3>2.3 那扇门：ANI 门控注入</h3>
+<p>本方案与传统「每轮检索 top-k 注入」的分水岭在于：<b>主模型的上下文默认不受打扰</b>。心跳节拍里产生的任何内容，只在 ANI 判定「与当前任务直接相关」时，才在下一个用户输入边界注入主上下文；其余一切静默。</p>
+
+<div class="callout pos">
+  <div class="label">为什么门控优于常开检索</div>
+  <p>常开 RAG 每轮都往上下文塞 top-k，32k 窗口被持续稀释，且注入噪音是单向累积的。ANI 门控把「要不要打扰主模型」本身变成一个由低成本模型做的显式决策——过滤器的价格是 minimax 级的，保护的是 Kimi-K3 级的注意力。</p>
+</div>
+
+<!-- ═══════════════ 3. 用户体验 ═══════════════ -->
+<h2 class="sec"><span class="no">03</span>用户体验：看得见的只有一行字</h2>
+
+<h3>3.1 四幕剧（用户视角）</h3>
+<table>
+  <tr><th style="width:14%">幕</th><th style="width:30%">场景</th><th>用户感知</th></tr>
+  <tr><td>Ⅰ 开工</td><td>在项目目录首次启动 alice-code</td><td>无感。./.raw ./.wiki ./.outputs 静默建立；git 仓库的 .gitignore 被幂等追加三行</td></tr>
+  <tr><td>Ⅱ 工作</td><td>正常对话、改代码、做决策</td><td>无感。有意义的片段（决策、代码块、约定）被规则切片进 ./.raw；想确保某条被记住，手动 <code>/raw 记下这条</code></td></tr>
+  <tr><td>Ⅲ 生长</td><td>daemon 心跳节拍，ANI 分诊，KARPATHY 整理</td><td>近乎无感。状态栏多一行极轻信息：<code>[wiki 12页 · 2h前]</code>；失败静默，只进 daemon.log 与 OTEL trace</td></tr>
+  <tr><td>Ⅳ 回响</td><td>三天后回到项目，问"上次那个方案定的什么"</td><td>主模型收到 ANI 递来的一张便签（≤800 token，标注 <code>[来自 .wiki 的工作记忆]</code>），直接答出三天前的决策与理由</td></tr>
+</table>
+
+<h3>3.2 用户可控的旋钮</h3>
+<ul>
+  <li><code>/raw 记下这条</code> —— 手动打点，把当前片段显式切片进 ./.raw（已拍板）</li>
+  <li>状态栏一行 —— <code>[wiki N页 · 最近ingest时间]</code>，照 TokenBudgetBar 的既有模式渲染（已拍板）</li>
+  <li><code>settings.jsonc</code> 开关 —— <code>memoryWiki: { enabled, autoCreate, injectMaxTokens }</code>，用户可整个关掉</li>
+  <li>模型指派 —— ANI / KARPATHY 的 modelPolicy 均可在配置中改写，默认值只是推荐</li>
+</ul>
+
+<h3>3.3 静默的边界：静默 ≠ 不可知</h3>
+<div class="callout neg">
+  <div class="label">反面场景（被本设计排除）</div>
+  <p>ingest 连续失败三天，用户毫无知觉，直到发现"记忆"停在一周前。纯静默不可接受——所以状态栏那一行是<strong>信任装置</strong>而非装饰：<code>[wiki 12页 · 3天前 ⚠]</code> 一眼可知知识库已停转。不弹窗、不打断，但可审计（daemon.log + OTEL + <code>/wiki-doctor</code> 手动体检）。</p>
+</div>
+
+<!-- ═══════════════ 4. 经济学 ═══════════════ -->
+<h2 class="sec"><span class="no">04</span>异构模型经济学</h2>
+
+<p>本提案把「记忆维护」这件持续发生的事，定价在<b>接近零</b>的档位上：</p>
+
+<table>
+  <tr><th>环节</th><th>频率</th><th>承担模型</th><th>单次上下文</th><th>成本量级</th></tr>
+  <tr><td>切片进 ./.raw</td><td>每条消息</td><td>无（规则 + 手动 /raw）</td><td>—</td><td>0</td></tr>
+  <tr><td>ANI 心跳分诊</td><td>每 tick（脏检查为前置）</td><td>minimax 高速档</td><td>增量 diff + 计数，&lt;2k</td><td>≈0，且 .raw 无变化时零调用</td></tr>
+  <tr><td>KARPATHY 增量 ingest</td><td>ANI 唤起时</td><td>本地 qwen3-4B</td><td>新增素材 + 相关主题页</td><td>0（本地电力）</td></tr>
+  <tr><td>记忆便签注入</td><td>ANI 判定必要时</td><td>—（写入主上下文）</td><td>≤800 token</td><td>占主模型窗口，受硬上限约束</td></tr>
+  <tr><td>主对话编排</td><td>每轮</td><td>Kimi-K3 档</td><td>干净的任务上下文</td><td>不为记忆维护多花一分钱</td></tr>
+</table>
+
+<p>这套定价能成立，是因为每个环节都被指派给了<b>能力恰好够用</b>的模型：切片不需要智能，分诊需要速度，整理需要格式遵从，只有最终与用户的对话才需要高智力。这与既有的 <code>multi_model_routing</code>（按能力层选模型）互补而非冲突——那条是按「任务类型」路由，这条是按「角色身份」钉死。</p>
+
+<!-- ═══════════════ 5. 原则与边界 ═══════════════ -->
+<h2 class="sec"><span class="no">05</span>设计原则与不做的事</h2>
+
+<h3>5.1 五条原则</h3>
+<ol>
+  <li><b>记忆留在本地</b>。./.wiki 是用户磁盘上的纯文本，不上传、不同步云端、不需要账号。跨端同步若未来要做，走 TeamMemorySync 既有协议，且默认关闭。</li>
+  <li><b>失败必须廉价</b>。KARPATHY 写坏一页，lint 检出，下轮重写；ANI 误判一次注入，用户忽略一张便签。任何单点失败都不累积成灾难。</li>
+  <li><b>静默但可审计</b>。无弹窗、无打断；但 daemon.log 有结构化记录，OTEL 有 span，状态栏有一行，<code>/wiki-doctor</code> 可随时手动体检。</li>
+  <li><b>体验一致</b>。所有下载 alice-code 的人，默认模型指派、目录约定、注入上限完全一致；可改，但改的是自己的配置，不存在分档功能。</li>
+  <li><b>不替代用户的知识库</b>。./.wiki 是工作记忆（系统维护、会过时、可重写）；./wiki 是知识资产（用户经营、进 git、长期演化）。前者喂给模型，后者属于人。</li>
+</ol>
+
+<h3>5.2 明确不做</h3>
+<ul>
+  <li><span class="x">✕</span> 不做常开 RAG 全文注入（稀释主上下文）</li>
+  <li><span class="x">✕</span> 不在非 git 目录创建 .gitignore，不改动用户的版本控制习惯</li>
+  <li><span class="x">✕</span> 不把 ./.wiki 内容上传任何远端（含"匿名统计"）</li>
+  <li><span class="x">✕</span> 不让 ANI/KARPATHY 拥有写用户工作区文件的权限（它们只能写 ./.raw ./.wiki ./.outputs）</li>
+  <li><span class="x">✕</span> 不做向量数据库/嵌入索引——第一期用四件套摘要 + TF 排序，32k 场景下够了</li>
+</ul>
+
+<!-- ═══════════════ 6. 里程碑 ═══════════════ -->
+<h2 class="sec"><span class="no">06</span>里程碑：四个 Phase，各自可验收</h2>
+
+<table>
+  <tr><th style="width:12%">Phase</th><th style="width:30%">内容</th><th>验收底线</th></tr>
+  <tr>
+    <td><b>P0</b> 约定层<br><span style="color:var(--ink-mute)">无 LLM</span></td>
+    <td>点目录规范落地；.gitignore 幂等追加；./.raw append-only 格式 + 水位线文件</td>
+    <td>任意目录启动 alice-code → 三点目录就位；git 仓库下 .gitignore 追加幂等（重复执行无 diff）；非 git 目录零副作用</td>
+  </tr>
+  <tr>
+    <td><b>P1</b> 收集层</td>
+    <td>规则切片（代码块/决策句）+ <code>/raw</code> 手动打点；karpathy-wiki-ingest 增加 <code>--target ./.wiki</code>；手动触发跑通</td>
+    <td>一次 30 轮会话结束 → ./.raw 增加 ≥1 个切片；手动 ingest 后 ./.wiki 出现合格主题页（lint 五项全过）</td>
+  </tr>
+  <tr>
+    <td><b>P2</b> 自动化层</td>
+    <td>ANI 注册为 AgentProfile（modelPolicy fixed → 高速模型）；挂入 daemon scheduledTasks；脏检查 + 三动作分诊状态机</td>
+    <td>./.raw 无变化 → 连续 24h 零 LLM 调用；有变化 → 30 分钟内完成一次增量 ingest；ANI 崩溃不影响主会话</td>
+  </tr>
+  <tr>
+    <td><b>P3</b> 回响层</td>
+    <td>注入便签机制（下一个用户输入边界消费）；≤800 token 硬上限 + 来源标注；状态栏一行</td>
+    <td>跨 session 提问三天前决策 → 主模型答出且引用便签来源；无关任务时注入率 &lt; 20%；状态栏显示停转告警</td>
+  </tr>
+</table>
+
+<div class="callout">
+  <div class="label">推进纪律</div>
+  <p>每个 Phase 独立交付、独立验收、可单独回滚。P0/P1 不含任何 LLM 行为变更，可随时合入；P2 引入首个后台 LLM 调用，需 feature flag 门控（<code>memory_wiki</code>，默认开）；P3 是用户价值兑现层，未达注入率验收不得宣布完成。</p>
+</div>
+
+<!-- ═══════════════ 7. 风险 ═══════════════ -->
+<h2 class="sec"><span class="no">07</span>风险与对策</h2>
+
+<table>
+  <tr><th style="width:30%">风险</th><th style="width:14%">等级</th><th>对策</th></tr>
+  <tr><td>本地 4B 模型写主题页质量不足</td><td><b>中</b></td><td>模板刚性（四件套固定结构）降低翻车率；lint 五项机器兜底；逃生通道：modelPolicy 从 fixed 调成 tier:balanced 路由到云端中档模型，本地模型退守切片</td></tr>
+  <tr><td>"有意义的片段"判定失误，.raw 垃圾进垃圾出</td><td><b>中</b></td><td>P1 只做规则切片 + 手动打点（质量下限可控）；LLM 抽取后置到观察期之后；ingest 侧由 KARPATHY 做二次过滤</td></tr>
+  <tr><td>ANI 误注入，打扰主模型</td><td>低</td><td>便签明确标注来源与"二等公民证据，可质疑可忽略"；注入率纳入 P3 验收（&lt;20%）；用户可一键关</td></tr>
+  <tr><td>后台代理与主会话并发写冲突</td><td>低</td><td>.raw append-only + 水位线：主会话只追加，KARPATHY 只读水位线之前；物理上消除写竞争</td></tr>
+  <tr><td>本地模型不在线，KARPATHY 长期沉默</td><td>低</td><td>状态栏时间戳即告警；<code>/wiki-doctor</code> 一键诊断；静默失败但绝不谎报成功（继承 v3.1.2 诚实降级传统）</td></tr>
+  <tr><td>点目录与用户既有 ./wiki 混淆</td><td>低</td><td>命名隔离（隐藏 vs 非隐藏）+ 文档明示「工作记忆 vs 知识资产」二分；skill 一律需显式 --target</td></tr>
+</table>
+
+<!-- ═══════════════ 8. 开放问题 ═══════════════ -->
+<h2 class="sec"><span class="no">08</span>开放问题（评审时拍板）</h2>
+
+<ol>
+  <li><b>ANI 与 7 角色 AgentProfile 的关系</b>：ANI 注册为第 8 个 profile，还是作为既有 <code>oracle</code>（后台伴随分析层）的特化实例？技术概要倾向于后者——oracle 的设计语义（预演、风险提示、伴随分析）与 ANI 同构。</li>
+  <li><b>.raw 切片的去重与压缩</b>：同一决策被讨论三次，是否需要在 ingest 时合并而非存三份？（倾向：ingest 侧「改写优于堆叠」自然消解，不在切片侧做复杂判重。）</li>
+  <li><b>多项目并行时的 ANI 调度</b>：daemon 同时服务多个项目目录，ANI 是每项目一个 tick 还是全局轮询？（倾向：每项目独立水位线，全局单 tick 轮询脏目录，成本仍 ≈0。）</li>
+  <li><b>记忆便签的呈现形态</b>：注入主上下文之外，是否同时在 TUI 显示"ANI 递了一张便签"？（倾向：是，一行灰色小字，与状态栏同一克制等级。）</li>
+</ol>
+
+<blockquote>
+  先让记忆留下来，再让记忆变聪明。P0 的三个目录，就是这一切的基石。
+</blockquote>
+
+<div class="footer">
+  <span>ALICE · 创意基础点 #1 · 工作记忆层 PRD</span>
+  <span>2026-08-17 · 提案 v1 · 待评审</span>
+</div>
+
+</div>
+</body>
+</html>
