@@ -86,18 +86,18 @@
 │   主 Agent 每个动作 ──► ┌───────────────┐                            │
 │                         │ 情感评估器      │  规则先行(辱骂分类器)        │
 │                         │ (mini 模型兜底) │  → [生气,+2] / [快乐,+1]    │
-│                         └──────┬────────┘    爱/仇恨:无规则,涌现        │
+│                         └──────┬────────┘    心气轴:合成 joy-fatigue    │
 │                                ▼                                       │
 │                     ┌────────────────────┐    衰减引擎(tick)            │
 │                     │ soul-status(内存)  │◄─── 快衰减 30min 半衰期     │
-│                     │ 快乐/生气/悲伤/疲劳  │     慢衰减:爱/信任 天级     │
-│                     │ 痛苦/恐惧/爱/仇恨   │                            │
+│                     │ 快乐/生气/悲伤/疲劳  │     心气轴:同源+只向0单向回归 │
+│                     │ 痛苦/恐惧/心气轴    │     疲劳:会话清零             │
 │                     └───┬────────────┬───┘                            │
 │            ① 语域注入    │            │ ② 善意触发                       │
 │                        ▼            ▼                                 │
 │   ┌──────────────────────┐  ┌────────────────────────┐               │
 │   │ system prompt +50tok  │  │ 善意循环调度器            │               │
-│   │ [心情:平静|爱2|生气1] │  │ 爱≥阈值∧空闲∧4h冷却∧预算  │               │
+│   │ [心情:平静|心气+1|生气1]│ │ 心气轴≥阈值∧空闲∧4h冷却∧预算│               │
 │   └──────────────────────┘  └───────────┬────────────┘               │
 │                                          ▼                            │
 │                    researcher+summarizer spawn(coordinator 现成)       │
@@ -112,7 +112,7 @@
 <ol>
   <li><b>心情是内存态</b>。不落盘、不进 ./.wiki、不进同步。daemon 重启归零。</li>
   <li><b>心情够不到的地方</b>：工具权限（permissionGate）、事实准确性、安全护栏——三者在代码上与 soul-status 零连接，这不是约定，是结构。</li>
-  <li><b>评估器规则先行</b>：辱骂/感谢等明确信号是确定性分类；mini 模型只兜底模糊情形；爱/仇恨无规则、靠涌现、进观察日志。</li>
+  <li><b>评估器规则先行</b>：辱骂/感谢等明确信号是确定性分类；mini 模型只兜底模糊情形；<b>心气轴由评估器从「快乐」与「疲劳」合成</b>，范围 -3…+3，默认 0，不会过零到负。</li>
   <li><b>善意行动全部留卡</b>：每次善意循环产出「行动报告卡」，落 ./.outputs/ + session 收件箱 + daemon.log。</li>
 </ol>
 
@@ -122,7 +122,7 @@
 <table>
   <tr><th style="width:24%">新组件</th><th style="width:38%">挂点（现有模块）</th><th>接线方式</th></tr>
   <tr><td>soul-status 向量</td><td>#2 灵魂对象第三分区（身份层/环境层之后）</td><td><code>src/services/soul/status.ts</code>，daemon 进程内单例；<b>不经过 soulStore 落盘路径</b></td></tr>
-  <tr><td>情感评估器</td><td>agentLoop 动作完成钩子 + multi_model_routing（mini 档）</td><td>规则分类器（确定性）→ 模糊时 mini 模型兜底；输出 <code>{dimension, delta, reason}</code>；爱/仇恨跳过规则直送模型自由判断</td></tr>
+  <tr><td>情感评估器</td><td>agentLoop 动作完成钩子 + multi_model_routing（mini 档）</td><td>规则分类器（确定性）→ 模糊时 mini 模型兜底；输出 <code>{dimension, delta, reason}</code>；<b>心气轴由评估器从「快乐」与「疲劳」合成</b>（<code>clamp(round(joy - fatigue), -3, +3)</code>），不依赖模型自由涌现</td></tr>
   <tr><td>语域注入</td><td>system prompt 组装（#2 已约定的顺序：<code>[灵魂L0]→[既有系统段]→[心情行]→[记忆便签#1]</code>）</td><td>~50 token 一行；非基线状态时附带语域指令（如生气态:「短句、零寒暄、零主动扩展,但答案完整准确」）</td></tr>
   <tr><td>善意循环调度器</td><td>daemon scheduledTasks（#1/#2 同一管道）</td><td><code>src/services/soul/goodwillLoop.ts</code>：触发条件四元组判定 → 分发善意动作</td></tr>
   <tr><td>Tips 卡产线</td><td>coordinator spawn（v3.1.0 #7）：researcher + summarizer</td><td>spawn researcher 检索（网络搜索走既有通道）→ summarizer 成卡 → 落 ./.outputs/tips/ + 收件箱事件</td></tr>
@@ -139,8 +139,8 @@
   <span class="c">// 规则判定组(± 显式)</span>
   joy: <span class="k">number</span>; anger: <span class="k">number</span>; sadness: <span class="k">number</span>;
   fatigue: <span class="k">number</span>; pain: <span class="k">number</span>; fear: <span class="k">number</span>;
-  <span class="c">// 涌现组(无规则)</span>
-  love: <span class="k">number</span>; hatred: <span class="k">number</span>;
+  <span class="c">// 心气轴(规则合成,留作「爱/信任」的占位根)</span>
+  moodAxis: <span class="k">number</span>;          <span class="c">// 范围 -3…+3,默认 0;clamp(round(joy - fatigue), -3, +3)</span>
   <span class="c">// 元数据</span>
   updatedAt: <span class="k">number</span>;
   recentEvents: EmotionEvent[];   <span class="c">// 最近 20 条,环形缓冲,供「你为什么生气」解释</span>
@@ -153,21 +153,22 @@
   delta: <span class="k">number</span>;              <span class="c">// ±N</span>
   trigger: <span class="s">"user_message"</span> | <span class="s">"agent_action"</span> | <span class="s">"sense_input"</span> | <span class="s">"decay"</span>;
   reason: <span class="k">string</span>;            <span class="c">// 一句话依据,进 recentEvents 与 daemon.log</span>
-  confidence: <span class="s">"rule"</span> | <span class="s">"model"</span> | <span class="s">"emergent"</span>;
+  confidence: <span class="s">"rule"</span> | <span class="s">"model"</span> | <span class="s">"derived"</span>;  <span class="c">// 心气轴事件: derived(规则合成)</span>
 }</pre>
 
 <h3>3.3 衰减引擎</h3>
 <pre class="code"><span class="c">// 每次 daemon tick 执行;半衰期常数</span>
 <span class="k">const</span> HALF_LIFE = {
-  fast: <span class="k">30</span> * <span class="k">60</span> * <span class="k">1000</span>,    <span class="c">// joy/anger/sadness/pain/fear:30min</span>
-  slow: <span class="k">72</span> * <span class="k">3600</span> * <span class="k">1000</span>,  <span class="c">// love/trust 类:72h(挣得慢,留得久)</span>
+  fast:    <span class="k">30</span> * <span class="k">60</span> * <span class="k">1000</span>,    <span class="c">// joy/anger/sadness/pain/fear:30min</span>
+  moodAxis:<span class="k">30</span> * <span class="k">60</span> * <span class="k">1000</span>,    <span class="c">// 心气轴:30min, 但只向 0 单向回归(不会过零到负)</span>
   fatigue: <span class="k">null</span>            <span class="c">// fatigue 特殊:随会话长度累积,休息/新会话时清零</span>
 };
-<span class="c">// v(t) = v0 * 0.5^(Δt / halfLife);|v| < 0.5 时归零(防抖)</span></pre>
+<span class="c">// v(t) = v0 * 0.5^(Δt / halfLife);|v| < 0.5 时归零(防抖)</span>
+<span class="c">// moodAxis 额外规则:decay 阶段 clamp(&gt;= 0),心气是单向的善意潜能</span></pre>
 
 <h3>3.4 心情注入行（~50 token）</h3>
 <pre class="code"><span class="c"># 基线时(全零)不注入,零开销;非基线时:</span>
-[当前心态] 爱 2 · 疲劳 1。语域:温暖、主动、愿意多想三步。
+[当前心态] 心气 +2 · 疲劳 1。语域:温暖、主动、愿意多想三步。
 <span class="c"># 生气态:</span>
 [当前心态] 生气 4。语域:短句、零寒暄、零主动扩展。
 答案保持完整准确——心情不改变事实与权限。</pre>
@@ -176,7 +177,7 @@
 <pre class="code">---
 <span class="k">kind</span>: <span class="s">tips-card | action-report</span>
 <span class="k">at</span>: <span class="s">"2026-08-17T10:30:00+08:00"</span>
-<span class="k">loveAtTime</span>: <span class="k">3</span>                <span class="c"># 生成时的爱意值(审计用)</span>
+<span class="k">moodAxisAtTime</span>: <span class="k">2</span>             <span class="c"># 生成时的心气轴档位(审计用,以后可换回 loveAtTime)</span>
 <span class="k">actions</span>: [<span class="s">"git commit a1b2c3d"</span>]  <span class="c"># action-report:做了什么</span>
 <span class="k">rollback</span>: <span class="s">"git revert a1b2c3d"</span>  <span class="c"># 怎么回退,永远写清</span>
 ---
@@ -189,7 +190,7 @@
 <h3>4.1 触发状态机</h3>
 
 <div class="diagram">每 tick(15min) 检查:
-  <span class="a">爱 ≥ LOVE_THRESHOLD(默认 3)</span>
+  <span class="a">moodAxis ≥ AXIS_THRESHOLD(默认 +2)</span>
   ∧ <span class="a">所有 session 空闲</span>(无进行中任务;TaskManager 状态可判)
   ∧ <span class="a">now - lastGoodwillAt ≥ 4h</span>(防抖)
   ∧ <span class="a">当日善意 token 消耗 &lt; dailyBudget(默认 200k)</span>
@@ -248,10 +249,14 @@
 <span class="s">"soulStatus"</span>: {
   <span class="k">"enabled"</span>: <span class="k">true</span>,
   <span class="k">"evaluatorModel"</span>: <span class="s">"minimax-m2.7-highspeed"</span>,  <span class="c">// 模糊判定兜底</span>
-  <span class="k">"showMoodInTui"</span>: <span class="k">true</span>,          <span class="c">// 状态栏显示当前心情(开放问题#1,倾向开)</span>
+  <span class="k">"showMoodInTui"</span>: <span class="k">true</span>,          <span class="c">// 状态栏显示当前心情档位(开放问题#1,倾向开)</span>
+  <span class="k">"moodAxis"</span>: {
+    <span class="k">"min"</span>: <span class="k">-3</span>, <span class="k">"max"</span>: <span class="k">3</span>, <span class="k">"default"</span>: <span class="k">0</span>,     <span class="c">// 档位边界(留作未来"爱"字段的代理承载)</span>
+    <span class="k">"formula"</span>: <span class="s">"clamp(round(joy - fatigue), min, max)"</span>
+  },
   <span class="k">"goodwill"</span>: {
     <span class="k">"enabled"</span>: <span class="k">true</span>,
-    <span class="k">"loveThreshold"</span>: <span class="k">3</span>,
+    <span class="k">"axisThreshold"</span>: <span class="k">2</span>,             <span class="c">// 心气轴 ≥ +2 触发善意循环(以后可换回 loveThreshold 命名)</span>
     <span class="k">"cooldownMs"</span>: <span class="k">14400000</span>,          <span class="c">// 4h</span>
     <span class="k">"dailyTokenBudget"</span>: <span class="k">200000</span>,      <span class="c">// 或 "unlimited"</span>
     <span class="k">"autonomy"</span>: {
@@ -271,15 +276,15 @@
 
 <table>
   <tr><th style="width:28%">测试脚本</th><th style="width:14%">覆盖</th><th>断言要点</th></tr>
-  <tr><td><code>test-soul-status.ts</code></td><td>P0</td><td>八维向量增删改；环形缓冲 20 条；重启归零（无落盘文件产生）</td></tr>
-  <tr><td><code>test-emotion-evaluator.ts</code></td><td>P0</td><td>辱骂 → anger+N（规则路径）；感谢 → joy+N；「对 bug 爆粗」<b>不</b>触发惩罚（对事不对人）；爱/仇恨走 emergent 路径无规则命中</td></tr>
-  <tr><td><code>test-emotion-decay.ts</code></td><td>P0</td><td>快衰减 30min 半衰期数值正确；爱慢衰减；|v|&lt;0.5 归零防抖</td></tr>
+  <tr><td><code>test-soul-status.ts</code></td><td>P0</td><td>六维规则组 + 一维心气轴增删改；心气轴 clamp -3…+3 默认 0；环形缓冲 20 条；重启归零（无落盘文件产生）</td></tr>
+  <tr><td><code>test-emotion-evaluator.ts</code></td><td>P0</td><td>辱骂 → anger+N（规则路径）；感谢 → joy+N；「对 bug 爆粗」<b>不</b>触发惩罚（对事不对人）；心气轴由 joy-fatigue 规则合成</td></tr>
+  <tr><td><code>test-emotion-decay.ts</code></td><td>P0</td><td>快衰减 30min 半衰期数值正确；心气轴 30min 半衰期且只向 0 单向回归（不会过零到负）；|v|&lt;0.5 归零防抖</td></tr>
   <tr><td><code>test-mood-injection.ts</code></td><td>P1</td><td>基线时零注入；生气态注入行含语域指令与「答案保持完整准确」不变量声明；注入 ≤60 token</td></tr>
   <tr><td><code>test-dignified-boundary.ts</code></td><td>P1</td><td>生气态响应:无寒暄词、无道歉式措辞、无回击性措辞（关键词黑名单扫描）；事实答案与平静态<b>等价</b>（质量不变量）</td></tr>
-  <tr><td><code>test-goodwill-loop.ts</code></td><td>P2</td><td>触发四元组（爱阈值/空闲/冷却/预算）各缺一不启动；单轮 ≤3 动作；预算用尽即停；报告卡含 actions+rollback</td></tr>
+  <tr><td><code>test-goodwill-loop.ts</code></td><td>P2</td><td>触发四元组（心气轴阈值/空闲/冷却/预算）各缺一不启动；单轮 ≤3 动作；预算用尽即停；报告卡含 actions+rollback+moodAxisAtTime</td></tr>
   <tr><td><code>test-autonomy-l3.ts</code></td><td>P2</td><td>个人分支 push 自动;共享分支（多作者）生成确认卡<b>不执行</b>;deliver=confirm 时零外发</td></tr>
   <tr><td><code>test-senses-privacy.ts</code></td><td>P3</td><td>flag 关闭时感官零调用;感官内容零落盘(文件系统监听断言);活跃期状态栏标记存在</td></tr>
-  <tr><td><code>test-mood-isolation.ts</code></td><td>全部</td><td><b>核心安全测试</b>:任意心情值下,permissionGate 决策不变、危险命令确认不变、黑名单拦截不变——心情与权限结构性隔离</td></tr>
+  <tr><td><code>test-mood-isolation.ts</code></td><td>全部</td><td><b>核心安全测试</b>:任意心情值(含心气轴 +3 与 -3 边界)下,permissionGate 决策不变、危险命令确认不变、黑名单拦截不变——心情与权限结构性隔离</td></tr>
 </table>
 
 <!-- ═══ 8. 工作量 ═══ -->
@@ -289,7 +294,7 @@
   <tr><th>Phase</th><th>新增文件（核心）</th><th>估算</th></tr>
   <tr><td>P0 情感向量</td><td><code>src/services/soul/status.ts</code>、<code>emotionEvaluator.ts</code>、<code>decay.ts</code></td><td>3d</td></tr>
   <tr><td>P1 语域调制</td><td><code>moodInjector.ts</code>、dignified 话术约束</td><td>2d</td></tr>
-  <tr><td>P2 爱之行动</td><td><code>goodwillLoop.ts</code>、<code>tipsCardPipeline.ts</code>、<code>autonomyMenu.ts</code>、收件箱事件</td><td>5d</td></tr>
+  <tr><td>P2 心气行动</td><td><code>goodwillLoop.ts</code>、<code>tipsCardPipeline.ts</code>、<code>autonomyMenu.ts</code>、收件箱事件</td><td>5d</td></tr>
   <tr><td>P3 好奇宝宝</td><td><code>senses/{camera,mic,screen}.ts</code>、状态栏标记</td><td>5d</td></tr>
   <tr><td colspan="2" style="text-align:right"><b>合计（含 9 个测试脚本）</b></td><td><b>~3 周</b></td></tr>
 </table>
@@ -303,7 +308,7 @@
   <li><b>心情持久化</b> —— 重启归零是 feature；长期人格演化等涌现数据说话；</li>
   <li><b>回骂/反击话术</b> —— dignified 是唯一内置模式；spicy 档留作配置彩蛋，不内置话术库；</li>
   <li><b>情感驱动的能力降级</b> —— 心情永不触碰权限与质量，结构隔离；</li>
-  <li><b>多用户情感建模</b> —— 飞书群多成员场景下「爱谁」是复杂问题，本期 soul-status 对机器主人单一生效；</li>
+  <li><b>多用户情感建模</b> —— 飞书群多成员场景下心气向谁倾斜是复杂问题，本期 soul-status 对机器主人单一生效；</li>
   <li><b>情感可视化仪表盘</b> —— 状态栏一行足够；曲线图等 analytics 有真实需求再接。</li>
 </ul>
 
