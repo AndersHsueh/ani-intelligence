@@ -39,6 +39,9 @@ import { SkillsList } from './views/SkillsList.js';
 import { ToolsList } from './views/ToolsList.js';
 import { McpStatus } from './views/McpStatus.js';
 import { InsightProgressMessage } from './messages/InsightProgressMessage.js';
+import { DoctorReport } from './views/DoctorReport.js';
+import { ContextUsage } from './views/ContextUsage.js';
+import { useCompactMode } from '../contexts/CompactModeContext.js';
 
 interface HistoryItemDisplayProps {
   item: HistoryItem;
@@ -65,6 +68,7 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
   embeddedShellFocused,
   availableTerminalHeightGemini,
 }) => {
+  const { compactMode } = useCompactMode();
   const marginTop =
     item.type === 'gemini_content' || item.type === 'gemini_thought_content'
       ? 0
@@ -109,7 +113,7 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
           contentWidth={contentWidth}
         />
       )}
-      {itemForDisplay.type === 'gemini_thought' && (
+      {!compactMode && itemForDisplay.type === 'gemini_thought' && (
         <ThinkMessage
           text={itemForDisplay.text}
           isPending={isPending}
@@ -119,7 +123,7 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
           contentWidth={contentWidth}
         />
       )}
-      {itemForDisplay.type === 'gemini_thought_content' && (
+      {!compactMode && itemForDisplay.type === 'gemini_thought_content' && (
         <ThinkMessageContent
           text={itemForDisplay.text}
           isPending={isPending}
@@ -171,6 +175,7 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
           isFocused={isFocused}
           activeShellPtyId={activeShellPtyId}
           embeddedShellFocused={embeddedShellFocused}
+          isUserInitiated={itemForDisplay.isUserInitiated}
         />
       )}
       {itemForDisplay.type === 'compression' && (
@@ -193,6 +198,25 @@ const HistoryItemDisplayComponent: React.FC<HistoryItemDisplayProps> = ({
       )}
       {itemForDisplay.type === 'insight_progress' && (
         <InsightProgressMessage progress={itemForDisplay.progress} />
+      )}
+      {itemForDisplay.type === 'doctor' && (
+        <DoctorReport
+          checks={itemForDisplay.checks}
+          summary={itemForDisplay.summary}
+          width={boxWidth}
+        />
+      )}
+      {itemForDisplay.type === 'context_usage' && (
+        <ContextUsage
+          modelName={itemForDisplay.modelName}
+          totalTokens={itemForDisplay.totalTokens}
+          contextWindowSize={itemForDisplay.contextWindowSize}
+          breakdown={itemForDisplay.breakdown}
+          toolDetails={itemForDisplay.toolDetails}
+          isEstimated={itemForDisplay.isEstimated}
+          showDetails={itemForDisplay.showDetails}
+          width={boxWidth}
+        />
       )}
     </Box>
   );

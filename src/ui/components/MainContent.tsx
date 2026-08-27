@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useMemo } from 'react';
 import { Box, Static } from 'ink';
 import { HistoryItemDisplay } from './HistoryItemDisplay.js';
 import { ShowMoreLines } from './ShowMoreLines.js';
@@ -11,6 +12,8 @@ import { Notifications } from './Notifications.js';
 import { OverflowProvider } from '../contexts/OverflowContext.js';
 import { useUIState } from '../contexts/UIStateContext.js';
 import { useAppContext } from '../contexts/AppContext.js';
+import { useCompactMode } from '../contexts/CompactModeContext.js';
+import { mergeCompactToolGroups } from '../utils/mergeCompactToolGroups.js';
 import { AppHeader } from './AppHeader.js';
 import { DebugModeNotification } from './DebugModeNotification.js';
 
@@ -23,6 +26,7 @@ const MAX_GEMINI_MESSAGE_LINES = 65536;
 export const MainContent = () => {
   const { version } = useAppContext();
   const uiState = useUIState();
+  const { compactMode } = useCompactMode();
   const {
     pendingHistoryItems,
     terminalWidth,
@@ -30,6 +34,21 @@ export const MainContent = () => {
     staticAreaMaxItemHeight,
     availableTerminalHeight,
   } = uiState;
+
+  // Compact mode: merge consecutive tool_group history items into single
+  // groups before rendering (fused from qwen-code MainContent.tsx).
+  // alice has no summary-absorption mechanism yet, so absorbedCallIds stays empty.
+  const mergedHistory = useMemo(
+    () =>
+      compactMode
+        ? mergeCompactToolGroups(
+            uiState.history,
+            uiState.embeddedShellFocused,
+            uiState.activePtyId,
+          )
+        : uiState.history,
+    [compactMode, uiState.history, uiState.embeddedShellFocused, uiState.activePtyId],
+  );
 
   return (
     <>
@@ -39,7 +58,7 @@ export const MainContent = () => {
           <AppHeader key="app-header" version={version} />,
           <DebugModeNotification key="debug-notification" />,
           <Notifications key="notifications" />,
-          ...uiState.history.map((h) => (
+          ...mergedHistory.map((h) => (
             <HistoryItemDisplay
               terminalWidth={terminalWidth}
               mainAreaWidth={mainAreaWidth}

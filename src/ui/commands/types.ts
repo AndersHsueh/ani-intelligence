@@ -150,7 +150,8 @@ export interface OpenDialogActionReturn {
     | 'approval-mode'
     | 'resume'
     | 'extensions_manage'
-    | 'mcp';
+    | 'mcp'
+    | 'delete';
 }
 
 /**

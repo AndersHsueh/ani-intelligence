@@ -16,6 +16,7 @@ import { type DOMElement, measureElement } from 'ink';
 import { App } from './App.js';
 import { AppContext } from './contexts/AppContext.js';
 import { UIStateContext, type UIState } from './contexts/UIStateContext.js';
+import { CompactModeProvider } from './contexts/CompactModeContext.js';
 import {
   UIActionsContext,
   type UIActions,
@@ -55,6 +56,7 @@ import { useSettingsCommand } from './hooks/useSettingsCommand.js';
 import { useModelCommand } from './hooks/useModelCommand.js';
 import { useApprovalModeCommand } from './hooks/useApprovalModeCommand.js';
 import { useResumeCommand } from './hooks/useResumeCommand.js';
+import { useDeleteCommand } from './hooks/useDeleteCommand.js';
 import { useSlashCommandProcessor } from './hooks/slashCommandProcessor.js';
 import { useVimMode } from './contexts/VimModeContext.js';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
@@ -107,6 +109,12 @@ import { useAgentsManagerDialog } from './hooks/useAgentsManagerDialog.js';
 import { useExtensionsManagerDialog } from './hooks/useExtensionsManagerDialog.js';
 import { useMcpDialog } from './hooks/useMcpDialog.js';
 import { useAttentionNotifications } from './hooks/useAttentionNotifications.js';
+import { useTerminalProgress } from './hooks/useTerminalProgress.js';
+import {
+  getStickyTodos,
+  getStickyTodosRenderKey,
+} from './utils/todoSnapshot.js';
+import type { TodoItem } from './components/TodoDisplay.js';
 import {
   requestConsentInteractive,
   requestConsentOrFail,
@@ -124,6 +132,23 @@ function isToolExecuting(pendingHistoryItems: HistoryItemWithoutId[]) {
     }
     return false;
   });
+}
+
+// Fused from qwen-code AppContainer.tsx: return a referentially stable todo
+// array that only changes when the todo content actually changes, so
+// memoized children (StickyTodoList) don't re-render on every history update.
+function useStableStickyTodos(todos: TodoItem[] | null): TodoItem[] | null {
+  const renderKey = getStickyTodosRenderKey(todos);
+  const stableTodosRef = useRef<{
+    renderKey: string;
+    todos: TodoItem[] | null;
+  } | null>(null);
+
+  if (stableTodosRef.current?.renderKey !== renderKey) {
+    stableTodosRef.current = { renderKey, todos };
+  }
+
+  return stableTodosRef.current.todos;
 }
 
 interface AppContainerProps {
@@ -425,14 +450,6 @@ export const AppContainer = (props: AppContainerProps) => {
 
   useInitializationAuthError(initializationResult.authError, onAuthError);
 
-  // Sync user tier from config when authentication changes
-  // TODO: Implement getUserTier() method on Config if needed
-  // useEffect(() => {
-  //   if (authState === AuthState.Authenticated) {
-  //     setUserTier(config.getUserTier());
-  //   }
-  // }, [config, authState]);
-
   // Check for enforced auth type mismatch
   useEffect(() => {
     // Check for initialization error first
@@ -495,6 +512,16 @@ export const AppContainer = (props: AppContainerProps) => {
     remount: refreshStatic,
   });
 
+  const {
+    isDeleteDialogOpen,
+    openDeleteDialog,
+    closeDeleteDialog,
+    handleDelete,
+  } = useDeleteCommand({
+    config,
+    addItem: historyManager.addItem,
+  });
+
   const { toggleVimEnabled } = useVimMode();
 
   const {
@@ -538,6 +565,7 @@ export const AppContainer = (props: AppContainerProps) => {
       openExtensionsManagerDialog,
       openMcpDialog,
       openResumeDialog,
+      openDeleteDialog,
     }),
     [
       openAuthDialog,
@@ -555,6 +583,7 @@ export const AppContainer = (props: AppContainerProps) => {
       openExtensionsManagerDialog,
       openMcpDialog,
       openResumeDialog,
+      openDeleteDialog,
     ],
   );
 
@@ -887,6 +916,11 @@ export const AppContainer = (props: AppContainerProps) => {
   const [escapePressedOnce, setEscapePressedOnce] = useState(false);
   const escapeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [constrainHeight, setConstrainHeight] = useState<boolean>(true);
+  // Compact mode (Ctrl+O): hide tool output/thinking for a cleaner view.
+  // Persisted under ui.compactMode (default false — appearance unchanged).
+  const [compactMode, setCompactMode] = useState<boolean>(
+    settings.merged.ui?.compactMode ?? false,
+  );
   const [ideContextState, setIdeContextState] = useState<
     IdeContext | undefined
   >();
@@ -1234,6 +1268,11 @@ export const AppContainer = (props: AppContainerProps) => {
         if (activePtyId || embeddedShellFocused) {
           setEmbeddedShellFocused((prev) => !prev);
         }
+      } else if (keyMatchers[Command.TOGGLE_COMPACT_MODE](key)) {
+        const newValue = !compactMode;
+        setCompactMode(newValue);
+        void settings.setValue(SettingScope.User, 'ui.compactMode', newValue);
+        refreshStatic();
       }
     },
     [
@@ -1261,6 +1300,9 @@ export const AppContainer = (props: AppContainerProps) => {
       embeddedShellFocused,
       settings.merged.general?.debugKeystrokeLogging,
       isAuthenticating,
+      compactMode,
+      settings,
+      refreshStatic,
     ],
   );
 
@@ -1329,6 +1371,7 @@ export const AppContainer = (props: AppContainerProps) => {
     isMcpDialogOpen ||
     isApprovalModeDialogOpen ||
     isResumeDialogOpen ||
+    isDeleteDialogOpen ||
     isExtensionsManagerDialogOpen;
 
   const {
@@ -1349,6 +1392,24 @@ export const AppContainer = (props: AppContainerProps) => {
     () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
     [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
   );
+
+  // Sticky todo panel (fused from qwen-code). alice adaptation: gated by the
+  // `general.stickyTodos` setting (default false) so default appearance is
+  // unchanged.
+  const stickyTodosEnabled =
+    settings.merged.general?.stickyTodos ?? false;
+  const rawStickyTodos = useMemo(
+    () =>
+      stickyTodosEnabled
+        ? getStickyTodos(historyManager.history, pendingHistoryItems)
+        : null,
+    [stickyTodosEnabled, historyManager.history, pendingHistoryItems],
+  );
+  const stickyTodos = useStableStickyTodos(rawStickyTodos);
+
+  // Terminal tab progress bar (OSC 9;4) for iTerm2/Kitty/Ghostty — fused
+  // from qwen-code AppContainer.tsx. No-op on unsupported terminals.
+  useTerminalProgress(streamingState, isToolExecuting(pendingHistoryItems));
 
   const uiState: UIState = useMemo(
     () => ({
@@ -1372,6 +1433,7 @@ export const AppContainer = (props: AppContainerProps) => {
       isPermissionsDialogOpen,
       isApprovalModeDialogOpen,
       isResumeDialogOpen,
+      isDeleteDialogOpen,
       slashCommands,
       pendingSlashCommandHistoryItems,
       commandContext,
@@ -1449,6 +1511,8 @@ export const AppContainer = (props: AppContainerProps) => {
       isMcpDialogOpen,
       // Feedback dialog
       isFeedbackDialogOpen,
+      // Sticky todo panel
+      stickyTodos,
     }),
     [
       isThemeDialogOpen,
@@ -1469,6 +1533,7 @@ export const AppContainer = (props: AppContainerProps) => {
       isPermissionsDialogOpen,
       isApprovalModeDialogOpen,
       isResumeDialogOpen,
+      isDeleteDialogOpen,
       slashCommands,
       pendingSlashCommandHistoryItems,
       commandContext,
@@ -1547,6 +1612,8 @@ export const AppContainer = (props: AppContainerProps) => {
       isMcpDialogOpen,
       // Feedback dialog
       isFeedbackDialogOpen,
+      // Sticky todo panel
+      stickyTodos,
     ],
   );
 
@@ -1594,6 +1661,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Delete session dialog
+      openDeleteDialog,
+      closeDeleteDialog,
+      handleDeleteSession: handleDelete,
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
@@ -1641,6 +1712,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Delete session dialog
+      openDeleteDialog,
+      closeDeleteDialog,
+      handleDelete,
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
@@ -1660,7 +1735,9 @@ export const AppContainer = (props: AppContainerProps) => {
             }}
           >
             <ShellFocusContext.Provider value={isFocused}>
-              <App />
+              <CompactModeProvider value={{ compactMode, setCompactMode }}>
+                <App />
+              </CompactModeProvider>
             </ShellFocusContext.Provider>
           </AppContext.Provider>
         </ConfigContext.Provider>

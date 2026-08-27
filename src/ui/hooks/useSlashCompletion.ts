@@ -46,6 +46,133 @@ function matchesCommand(cmd: SlashCommand, query: string): boolean {
   );
 }
 
+// ── Completion ranking (fused from qwen-code, alice-adapted contract) ──
+
+/**
+ * Match priority tiers for slash-command completion.
+ * Higher value = stronger match. Strictly decreasing:
+ * EXACT > PREFIX > SEGMENT_PREFIX > FUZZY.
+ */
+export const COMPLETION_PRIORITY = {
+  /** Command name equals the query exactly (case-insensitive) */
+  EXACT: 9000,
+  /** Command name (or an altName) starts with the query */
+  PREFIX: 8000,
+  /**
+   * Every query character lands, in order, on a segment-start position of
+   * the name (position 0 or right after a non-alphanumeric separator),
+   * e.g. query "st" hits "set-token" (s@0, t after '-').
+   */
+  SEGMENT_PREFIX: 7000,
+  /** Query characters appear in order within the name (subsequence) */
+  FUZZY: 6000,
+} as const;
+
+export type CompletionPriority =
+  (typeof COMPLETION_PRIORITY)[keyof typeof COMPLETION_PRIORITY];
+
+/** Strip a leading slash and lowercase (queries may arrive as "/he"). */
+function normalizeCompletionQuery(query: string): string {
+  return (query.startsWith('/') ? query.slice(1) : query).toLowerCase();
+}
+
+/**
+ * Normalize a command name for matching. A leading slash on the command
+ * name is stripped but NOT treated as a segment boundary.
+ */
+function normalizeCompletionName(name: string): string {
+  return (name.startsWith('/') ? name.slice(1) : name).toLowerCase();
+}
+
+function isSegmentStart(name: string, index: number): boolean {
+  if (index === 0) {
+    return true;
+  }
+  const prev = name[index - 1] ?? '';
+  return !/[a-z0-9]/.test(prev);
+}
+
+/** Acronym-style match: each query char hits a segment start, in order. */
+function isSegmentPrefixMatch(name: string, query: string): boolean {
+  let qi = 0;
+  for (let i = 0; i < name.length && qi < query.length; i++) {
+    if (isSegmentStart(name, i) && name[i] === query[qi]) {
+      qi++;
+    }
+  }
+  return qi === query.length;
+}
+
+/** Subsequence match: query chars appear in order within name. */
+function isSubsequenceMatch(name: string, query: string): boolean {
+  let qi = 0;
+  for (let i = 0; i < name.length && qi < query.length; i++) {
+    if (name[i] === query[qi]) {
+      qi++;
+    }
+  }
+  return qi === query.length;
+}
+
+/**
+ * Best match priority for a command against a query, or undefined when the
+ * command does not match at all. The canonical name is preferred: an exact
+ * altName hit ranks at PREFIX (only the canonical name can be EXACT).
+ */
+export function getCompletionPriority(
+  cmd: Pick<SlashCommand, 'name' | 'altNames'>,
+  query: string,
+): CompletionPriority | undefined {
+  const q = normalizeCompletionQuery(query);
+  if (!q) {
+    return undefined;
+  }
+  const name = normalizeCompletionName(cmd.name);
+  const alts = (cmd.altNames ?? []).map(normalizeCompletionName);
+
+  if (name === q) {
+    return COMPLETION_PRIORITY.EXACT;
+  }
+  if (name.startsWith(q) || alts.some((a) => a.startsWith(q))) {
+    return COMPLETION_PRIORITY.PREFIX;
+  }
+  if (
+    isSegmentPrefixMatch(name, q) ||
+    alts.some((a) => isSegmentPrefixMatch(a, q))
+  ) {
+    return COMPLETION_PRIORITY.SEGMENT_PREFIX;
+  }
+  if (
+    isSubsequenceMatch(name, q) ||
+    alts.some((a) => isSubsequenceMatch(a, q))
+  ) {
+    return COMPLETION_PRIORITY.FUZZY;
+  }
+  return undefined;
+}
+
+/**
+ * Numeric match strength usable directly in sort comparators.
+ * Returns -1 when the command does not match the query.
+ */
+export function getCommandMatchStrength(
+  cmd: Pick<SlashCommand, 'name' | 'altNames'>,
+  query: string,
+): number {
+  return getCompletionPriority(cmd, query) ?? -1;
+}
+
+/**
+ * Sort key for completion suggestions: strength descending, ties broken by
+ * command name ascending (stable and deterministic).
+ */
+export function completionKey(
+  cmd: Pick<SlashCommand, 'name' | 'altNames'>,
+  query: string,
+): { strength: number; name: string } {
+  return { strength: getCommandMatchStrength(cmd, query), name: cmd.name };
+}
+
 interface CommandParserResult {
   hasTrailingSpace: boolean;
   commandPathParts: string[];
@@ -279,7 +406,23 @@ function useCommandSuggestions(
         }
 
         if (!signal.aborted) {
-          const finalSuggestions = potentialSuggestions.map((cmd) => ({
+          // Rank suggestions: EXACT > PREFIX > SEGMENT_PREFIX > FUZZY, ties
+          // broken by name ascending (e.g. "/he" → help before hooks).
+          const rankedSuggestions = potentialSuggestions
+            .map((cmd) => ({ cmd, key: completionKey(cmd, partial) }))
+            .filter((r) => r.key.strength >= 0)
+            .sort(
+              (a, b) =>
+                b.key.strength - a.key.strength ||
+                (a.key.name < b.key.name
+                  ? -1
+                  : a.key.name > b.key.name
+                    ? 1
+                    : 0),
+            )
+            .map((r) => r.cmd);
+
+          const finalSuggestions = rankedSuggestions.map((cmd) => ({
             label: formatSlashCommandLabel(cmd),
             value: cmd.name,
             description: cmd.description,

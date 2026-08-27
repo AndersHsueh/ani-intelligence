@@ -82,6 +82,10 @@ export interface UIActions {
   openResumeDialog: () => void;
   closeResumeDialog: () => void;
   handleResume: (sessionId: string) => void;
+  // Delete session dialog (reuses SessionPicker)
+  openDeleteDialog: () => void;
+  closeDeleteDialog: () => void;
+  handleDeleteSession: (sessionId: string) => void;
   // Feedback dialog
   openFeedbackDialog: () => void;
   closeFeedbackDialog: () => void;

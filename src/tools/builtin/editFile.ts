@@ -7,6 +7,7 @@ import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import type { AliceTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { checkpointService } from '../../services/checkpoint.js';
 import { z } from 'zod/v4';
 import { requiredNonEmptyString, intOneBased, intNonNegative, editFileEncodingEnum } from '../zodPrimitives.js';
 
@@ -225,6 +226,9 @@ export const editFileTool: AliceTool = {
       const newLines = applyEdits(lines, normalized);
       const lineEnding = raw.includes('\r\n') ? '\r\n' : '\n';
       const newContent = newLines.join(lineEnding);
+
+      // checkpointing（默认关闭）：覆写前快照修改前内容；快照失败不阻断编辑
+      await checkpointService.snapshotBeforeWrite(resolvedPath);
 
       await writeFile(resolvedPath, newContent, encoding as BufferEncoding);
 

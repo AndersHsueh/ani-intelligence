@@ -45,6 +45,14 @@ const SUITES = {
     'test-issue-018-cli.ts',
     'test-runner-timeout.ts',
     'test-llm-abort.ts',
+    // TUI 功能融合（tui-sync）先红测试：TDD 第一阶段，功能未实现时应红。
+    'test-tui-sync-compact-mode.ts',
+    'test-tui-sync-osc.ts',
+    'test-tui-sync-merge-compact.ts',
+    'test-tui-sync-session-management.ts',
+    'test-tui-sync-slash-completion.ts',
+    'test-tui-sync-checkpoint.ts',
+    'test-tui-sync-new-commands.ts',
   ],
   // These are intentionally opt-in. They exercise release-boundary contracts
   // and are called by `verify` after the single final release build/smoke;

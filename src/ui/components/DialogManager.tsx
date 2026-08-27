@@ -317,5 +317,16 @@ export const DialogManager = ({
     );
   }
 
+  if (uiState.isDeleteDialogOpen) {
+    return (
+      <SessionPicker
+        sessionService={config.getSessionService()}
+        currentBranch={uiState.branchName}
+        onSelect={uiActions.handleDeleteSession}
+        onCancel={uiActions.closeDeleteDialog}
+      />
+    );
+  }
+
   return null;
 };

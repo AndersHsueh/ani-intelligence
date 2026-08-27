@@ -176,7 +176,7 @@ export type DnsResolutionOrder = 'ipv4first' | 'verbatim';
  * The structure of this object defines the structure of the `Settings` type.
  * `as const` is crucial for TypeScript to infer the most specific types possible.
  */
-const SETTINGS_SCHEMA = {
+export const SETTINGS_SCHEMA = {
   // Maintained for compatibility/criticality
   mcpServers: {
     type: 'object',
@@ -264,6 +264,16 @@ const SETTINGS_SCHEMA = {
         default: false,
         description: 'Enable Vim keybindings',
         showInDialog: true,
+      },
+      stickyTodos: {
+        type: 'boolean',
+        label: 'Sticky Todo List',
+        category: 'General',
+        requiresRestart: false,
+        default: false,
+        description:
+          'Show a sticky TodoList pinned above the input while todos are active.',
+        showInDialog: false,
       },
       enableAutoUpdate: {
         type: 'boolean',
@@ -416,6 +426,16 @@ const SETTINGS_SCHEMA = {
         default: 'Qwen Dark' as string,
         description: 'The color theme for the UI.',
         showInDialog: true,
+      },
+      compactMode: {
+        type: 'boolean',
+        label: 'Compact Mode',
+        category: 'UI',
+        requiresRestart: false,
+        default: false,
+        description:
+          'Hide tool output and thinking for a cleaner view (toggle with Ctrl+O).',
+        showInDialog: false,
       },
       customThemes: {
         type: 'object',

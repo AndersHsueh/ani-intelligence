@@ -423,7 +423,7 @@ type ToolStatusIndicatorProps = {
   name: string;
 };
 
-const ToolStatusIndicator: React.FC<ToolStatusIndicatorProps> = ({
+export const ToolStatusIndicator: React.FC<ToolStatusIndicatorProps> = ({
   status,
   name,
 }) => {

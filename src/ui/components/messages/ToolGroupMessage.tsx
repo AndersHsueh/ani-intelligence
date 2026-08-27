@@ -11,9 +11,11 @@ import type { IndividualToolCallDisplay } from '../../types.js';
 import { ToolCallStatus } from '../../types.js';
 import { ToolMessage } from './ToolMessage.js';
 import { ToolConfirmationMessage } from './ToolConfirmationMessage.js';
+import { CompactToolGroupDisplay } from './CompactToolGroupDisplay.js';
 import { theme } from '../../semantic-colors.js';
 import { SHELL_COMMAND_NAME, SHELL_NAME } from '../../constants.js';
 import { useConfig } from '../../contexts/ConfigContext.js';
+import { useCompactMode } from '../../contexts/CompactModeContext.js';
 
 interface ToolGroupMessageProps {
   groupId: number;
@@ -24,6 +26,8 @@ interface ToolGroupMessageProps {
   activeShellPtyId?: number | null;
   embeddedShellFocused?: boolean;
   onShellInputSubmit?: (input: string) => void;
+  /** User-initiated groups never collapse in compact mode. */
+  isUserInitiated?: boolean;
 }
 
 // Main component renders the border and maps the tools using ToolMessage
@@ -34,13 +38,39 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
   isFocused = true,
   activeShellPtyId,
   embeddedShellFocused,
+  isUserInitiated,
 }) => {
+  const { compactMode } = useCompactMode();
+
+  const hasConfirmingTool = toolCalls.some(
+    (t) => t.status === ToolCallStatus.Confirming,
+  );
+  const hasErrorTool = toolCalls.some((t) => t.status === ToolCallStatus.Error);
   const isEmbeddedShellFocused =
     embeddedShellFocused &&
     toolCalls.some(
       (t) =>
         t.ptyId === activeShellPtyId && t.status === ToolCallStatus.Executing,
     );
+
+  // Compact mode: entire group → single line summary.
+  // Force-expand when: user must interact (Confirming), tool errored,
+  // shell is focused, or the group is user-initiated.
+  const showCompact =
+    compactMode &&
+    !hasConfirmingTool &&
+    !hasErrorTool &&
+    !isEmbeddedShellFocused &&
+    !isUserInitiated;
+
+  if (showCompact) {
+    return (
+      <CompactToolGroupDisplay
+        toolCalls={toolCalls}
+        contentWidth={contentWidth}
+      />
+    );
+  }
 
   const hasPending = !toolCalls.every(
     (t) => t.status === ToolCallStatus.Success,

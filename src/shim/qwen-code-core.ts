@@ -7,6 +7,12 @@
 
 export const QWEN_DIR = '.alice';
 
+/**
+ * 默认模型上下文窗口（token 数）。alice 后端不回传 context window，
+ * /context 命令以此值作为兜底展示基准。
+ */
+export const DEFAULT_TOKEN_LIMIT = 128000;
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export enum ApprovalMode {
@@ -558,6 +564,10 @@ export class Config {
   // Alice shim - delegates to Alice daemon
   constructor(private readonly params: Record<string, any> = {}) {}
 
+  // In-memory approval mode state (plan mode toggle support, /plan command)
+  private approvalMode: ApprovalMode = ApprovalMode.DEFAULT;
+  private prePlanMode: ApprovalMode = ApprovalMode.DEFAULT;
+
   getModel(): string { return this.params.model || ''; }
   getGeminiClient(): GeminiClient { return new GeminiClient(); }
   getWorkingDir(): string { return this.params.workingDir || process.cwd(); }
@@ -603,7 +613,7 @@ export class Config {
   getDebugMode(): boolean { return false; }
   getGeminiMdFileCount(): number { return 0; }
   getProjectRoot(): string { return process.cwd(); }
-  getApprovalMode(): ApprovalMode { return ApprovalMode.DEFAULT; }
+  getApprovalMode(): ApprovalMode { return this.approvalMode; }
   getAuthType(): AuthType { return AuthType.API_KEY; }
   getAllConfiguredModels(): any[] { return []; }
   getActiveRuntimeModelSnapshot(): any { return null; }
@@ -659,7 +669,15 @@ export class Config {
   getBugCommand(): { urlTemplate?: string } | undefined { return undefined; }
   getSkillManager(): any { return null; }
   setModel(_model: string): void {}
-  setApprovalMode(_mode: ApprovalMode): void {}
+  setApprovalMode(mode: ApprovalMode): void {
+    // Track the mode active before entering plan mode so /plan exit can
+    // restore it (qwen-code getPrePlanMode parity).
+    if (mode === ApprovalMode.PLAN && this.approvalMode !== ApprovalMode.PLAN) {
+      this.prePlanMode = this.approvalMode;
+    }
+    this.approvalMode = mode;
+  }
+  getPrePlanMode(): ApprovalMode { return this.prePlanMode; }
   setAccessibility(_cfg: any): void {}
   setExcludedMcpServers(_servers: string[]): void {}
   setIdeMode(_mode: boolean): void {}
@@ -798,6 +816,14 @@ export class SessionService {
   loadSession(_id: string): Promise<any> { return Promise.resolve(null); }
   loadLastSession(): Promise<any> { return Promise.resolve(null); }
   sessionExists(_id: string): Promise<boolean> { return Promise.resolve(false); }
+  /** 读取会话标题（alice 会话文件 caption 字段；桩实现返回 null） */
+  getSessionTitle(_id: string): Promise<string | null> {
+    return Promise.resolve(null);
+  }
+  /** 写入会话标题（alice 由 daemonClient.renameSession → daemon 持久化；桩实现返回 false） */
+  setSessionTitle(_id: string, _title: string): Promise<boolean> {
+    return Promise.resolve(false);
+  }
 }
 
 export class McpClient {

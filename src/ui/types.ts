@@ -179,6 +179,25 @@ export type HistoryItemQuit = HistoryItemBase & {
 export type HistoryItemToolGroup = HistoryItemBase & {
   type: 'tool_group';
   tools: IndividualToolCallDisplay[];
+  /**
+   * True when this tool_group was explicitly initiated by the user (e.g.
+   * shell passthrough). User-initiated groups act as visual boundaries and
+   * never merge into compact-mode neighbors. (alice compatibility
+   * extension fused from qwen-code.)
+   */
+  isUserInitiated?: boolean;
+};
+
+/**
+ * Summary of a batch of tool uses, produced after a tool-use streak ends.
+ * Used by compact mode to decorate the adjacent tool_group header; the
+ * `precedingToolUseIds` field locates the target tool_group.
+ */
+export type HistoryItemToolUseSummary = HistoryItemBase & {
+  type: 'tool_use_summary';
+  summary: string;
+  /** Tool callIds this summary describes. Used to locate the target tool_group. */
+  precedingToolUseIds: string[];
 };
 
 export type HistoryItemUserShell = HistoryItemBase & {
@@ -261,6 +280,50 @@ export type HistoryItemInsightProgress = HistoryItemBase & {
   progress: InsightProgressProps;
 };
 
+// ─── /doctor（W2 环境自检）────────────────────────────────────────────────────
+
+export type DoctorCheckStatus = 'pass' | 'warn' | 'fail';
+
+export interface DoctorCheckResult {
+  category: string;
+  name: string;
+  status: DoctorCheckStatus;
+  message: string;
+  detail?: string;
+}
+
+export type HistoryItemDoctor = HistoryItemBase & {
+  type: 'doctor';
+  checks: DoctorCheckResult[];
+  summary: { pass: number; warn: number; fail: number };
+};
+
+// ─── /context（W1 上下文用量明细，裁剪版）─────────────────────────────────────
+
+export interface ContextToolDetail {
+  name: string;
+  tokens: number;
+}
+
+export interface ContextCategoryBreakdown {
+  systemPrompt: number;
+  tools: number;
+  messages: number;
+  freeSpace: number;
+}
+
+export type HistoryItemContextUsage = HistoryItemBase & {
+  type: 'context_usage';
+  modelName: string;
+  totalTokens: number;
+  contextWindowSize: number;
+  breakdown: ContextCategoryBreakdown;
+  /** detail 模式下的 Tools 明细（名称 + token） */
+  toolDetails: ContextToolDetail[];
+  isEstimated: boolean;
+  showDetails: boolean;
+};
+
 // Using Omit<HistoryItem, 'id'> seems to have some issues with typescript's
 // type inference e.g. historyItem.type === 'tool_group' isn't auto-inferring that
 // 'tools' in historyItem.
@@ -279,6 +342,7 @@ export type HistoryItemWithoutId =
   | HistoryItemAbout
   | HistoryItemHelp
   | HistoryItemToolGroup
+  | HistoryItemToolUseSummary
   | HistoryItemStats
   | HistoryItemModelStats
   | HistoryItemToolStats
@@ -290,7 +354,9 @@ export type HistoryItemWithoutId =
   | HistoryItemToolsList
   | HistoryItemSkillsList
   | HistoryItemMcpStatus
-  | HistoryItemInsightProgress;
+  | HistoryItemInsightProgress
+  | HistoryItemDoctor
+  | HistoryItemContextUsage;
 
 export type HistoryItem = HistoryItemWithoutId & { id: number };
 
@@ -314,6 +380,8 @@ export enum MessageType {
   SKILLS_LIST = 'skills_list',
   MCP_STATUS = 'mcp_status',
   INSIGHT_PROGRESS = 'insight_progress',
+  DOCTOR = 'doctor',
+  CONTEXT_USAGE = 'context_usage',
 }
 
 export interface InsightProgressProps {

@@ -171,6 +171,10 @@ export class DaemonRoutes {
         await this.handleRegisterCronWorkspace(req, res);
       } else if (pathname === '/channels/feishu' && method === 'POST') {
         await this.handleChannelFeishu(req, res);
+      } else if (pathname.startsWith('/session/') && pathname.endsWith('/rename') && method === 'POST') {
+        await this.handleRenameSession(req, res, pathname);
+      } else if (pathname.startsWith('/session/') && method === 'DELETE') {
+        await this.handleDeleteSession(res, pathname);
       } else {
         res.writeHead(404);
         res.end(JSON.stringify({ error: 'Not Found' }));
@@ -642,6 +646,76 @@ export class DaemonRoutes {
     const mode = getAgentMode();
     res.writeHead(200);
     res.end(JSON.stringify({ mode }));
+  }
+
+  /**
+   * DELETE /session/:id - 删除指定会话
+   * 防删当前会话：daemon 正在使用的当前会话返回 409；不存在返回 404。
+   */
+  private async handleDeleteSession(res: ServerResponse, pathname: string): Promise<void> {
+    const sessionId = pathname.slice('/session/'.length).split('?')[0];
+    if (!sessionId) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: 'Bad Request', message: 'session id required' }));
+      return;
+    }
+    const sessionManager = getSessionManager();
+    const current = sessionManager.getCurrentSession();
+    if (current && sessionId === current.id) {
+      res.writeHead(409);
+      res.end(JSON.stringify({ error: 'Conflict', message: '不能删除当前正在使用的会话' }));
+      return;
+    }
+    const deleted = await sessionManager.deleteSession(sessionId);
+    if (!deleted) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    this.logger.info(`DELETE /session/${sessionId} - 会话已删除`);
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true }));
+  }
+
+  /**
+   * POST /session/:id/rename - 会话改名（body: { caption }）
+   * 会话不存在返回 404；成功返回 200 + 新 caption。
+   */
+  private async handleRenameSession(req: IncomingMessage, res: ServerResponse, pathname: string): Promise<void> {
+    const sessionId = pathname
+      .slice('/session/'.length)
+      .replace(/\/rename$/, '')
+      .split('?')[0];
+    if (!sessionId) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: 'Bad Request', message: 'session id required' }));
+      return;
+    }
+    let caption = '';
+    try {
+      const raw = await readBody(req);
+      const parsed = (raw ? JSON.parse(raw) : {}) as { caption?: unknown };
+      if (typeof parsed.caption !== 'string' || parsed.caption.trim().length === 0) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: 'Bad Request', message: 'caption required' }));
+        return;
+      }
+      caption = parsed.caption.trim();
+    } catch (error: unknown) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: 'Bad Request', message: getErrorMessage(error) }));
+      return;
+    }
+    const sessionManager = getSessionManager();
+    const ok = await sessionManager.setSessionCaption(sessionId, caption);
+    if (!ok) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    this.logger.info(`POST /session/${sessionId}/rename - 会话已改名: ${caption}`);
+    res.writeHead(200);
+    res.end(JSON.stringify({ ok: true, id: sessionId, caption }));
   }
 
   /**

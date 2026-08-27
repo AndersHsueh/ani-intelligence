@@ -45,6 +45,13 @@ import { setupGithubCommand } from '../ui/commands/setupGithubCommand.js';
 import { insightCommand } from '../ui/commands/insightCommand.js';
 import { pluginsCommand } from '../ui/commands/pluginsCommand.js';
 import { voiceCommand } from '../ui/commands/voiceCommand.js';
+import { doctorCommand } from '../ui/commands/doctorCommand.js';
+import { contextCommand } from '../ui/commands/contextCommand.js';
+import { deleteCommand } from '../ui/commands/deleteCommand.js';
+import { renameCommand } from '../ui/commands/renameCommand.js';
+import { checkpointCommand } from '../ui/commands/checkpointCommand.js';
+import { rememberCommand } from '../ui/commands/rememberCommand.js';
+import { planCommand } from '../ui/commands/planCommand.js';
 
 /**
  * Loads the core, hard-coded slash commands that are an integral part
@@ -100,6 +107,13 @@ export class BuiltinCommandLoader implements ICommandLoader {
       setupGithubCommand,
       terminalSetupCommand,
       insightCommand,
+      doctorCommand,
+      contextCommand,
+      deleteCommand,
+      renameCommand,
+      checkpointCommand,
+      rememberCommand,
+      planCommand,
     ];
 
     return allDefinitions.filter((cmd): cmd is SlashCommand => cmd !== null);

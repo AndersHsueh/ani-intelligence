@@ -6,6 +6,7 @@
 import { configManager } from '../utils/config.js';
 import { mcpConfigManager } from '../utils/mcpConfig.js';
 import { sessionManager } from '../core/session.js';
+import { checkpointService } from '../services/checkpoint.js';
 import { skillManager } from '../core/skillManager.js';
 import { builtinTools } from '../tools/index.js';
 import { mcpManager } from '../core/mcp.js';
@@ -109,6 +110,13 @@ export async function initServices(logger: DaemonLogger): Promise<void> {
 
     runtimeToolRegistry.registerAll(builtinTools);
     logger.info('内置工具已注册');
+
+    // checkpointing 开关（settings general.checkpointing.enabled，默认关闭 → 行为不变）
+    try {
+      await checkpointService.init();
+    } catch (error: unknown) {
+      logger.warn('Checkpointing 初始化失败（保持关闭）', getErrorMessage(error));
+    }
 
     // 挂载工具调用审计日志（仅在 daemon 环境）
     attachToolLogging(logger);

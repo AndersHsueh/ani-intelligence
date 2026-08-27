@@ -74,6 +74,7 @@ interface SlashCommandProcessorActions {
   openPermissionsDialog: () => void;
   openApprovalModeDialog: () => void;
   openResumeDialog: () => void;
+  openDeleteDialog: () => void;
   quit: (messages: HistoryItem[]) => void;
   setDebugMessage: (message: string) => void;
   dispatchExtensionStateUpdate: (action: ExtensionUpdateAction) => void;
@@ -492,6 +493,9 @@ export const useSlashCommandProcessor = (
                       return { type: 'handled' };
                     case 'resume':
                       actions.openResumeDialog();
+                      return { type: 'handled' };
+                    case 'delete':
+                      actions.openDeleteDialog();
                       return { type: 'handled' };
                     case 'extensions_manage':
                       actions.openExtensionsManagerDialog();

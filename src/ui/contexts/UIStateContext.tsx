@@ -30,6 +30,7 @@ import type { SessionStatsState } from '../contexts/SessionContext.js';
 import type { ExtensionUpdateState } from '../state/extensions.js';
 import type { UpdateObject } from '../utils/updateCheck.js';
 import type { BudgetUsage } from '../../runtime/agent/tokenBudget.js';
+import type { TodoItem } from '../components/TodoDisplay.js';
 
 import { type UseHistoryManagerReturn } from '../hooks/useHistoryManager.js';
 import { type RestartReason } from '../hooks/useIdeTrustListener.js';
@@ -56,6 +57,8 @@ export interface UIState {
   isPermissionsDialogOpen: boolean;
   isApprovalModeDialogOpen: boolean;
   isResumeDialogOpen: boolean;
+  // Delete session dialog (reuses SessionPicker)
+  isDeleteDialogOpen: boolean;
   slashCommands: readonly SlashCommand[];
   pendingSlashCommandHistoryItems: HistoryItemWithoutId[];
   commandContext: CommandContext;
@@ -140,6 +143,10 @@ export interface UIState {
   isMcpDialogOpen: boolean;
   // Feedback dialog
   isFeedbackDialogOpen: boolean;
+  // Sticky todo panel (fused from qwen-code): latest todo snapshot to pin
+  // above the composer, or null when the panel should be hidden. Gated by
+  // the `general.stickyTodos` setting in AppContainer.
+  stickyTodos: TodoItem[] | null;
 }
 
 export const UIStateContext = createContext<UIState | null>(null);

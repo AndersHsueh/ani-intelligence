@@ -198,7 +198,16 @@ export class DaemonClient {
           const [headers, ...bodyParts] = responseData.split('\r\n\r\n');
           const bodyStr = bodyParts.join('\r\n\r\n');
           const json = bodyStr ? JSON.parse(bodyStr) : {};
-          resolve(json);
+          // 与 httpRequest 行为对齐：非 2xx 视为失败（携带 error 信息 reject），
+          // 保证 DELETE/POST 等端点的 404/409 能正确向上传递。
+          const statusLine = headers.split('\r\n')[0] ?? '';
+          const statusMatch = statusLine.match(/HTTP\/[\d.]+\s+(\d+)/);
+          const statusCode = statusMatch ? parseInt(statusMatch[1]!, 10) : 200;
+          if (statusCode >= 200 && statusCode < 300) {
+            resolve(json);
+          } else {
+            reject(new Error(json.error || `HTTP ${statusCode}`));
+          }
         } catch (error) {
           reject(new Error('响应解析失败'));
         }
@@ -379,6 +388,33 @@ export class DaemonClient {
       return await this.request(`/session/${sessionId}`, 'GET');
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * DELETE /session/:id - 删除指定会话
+   * 返回 true 表示删除成功；false 表示未删除（当前会话 409 / 不存在 404）。
+   */
+  async deleteSession(sessionId: string): Promise<boolean> {
+    try {
+      await this.request(`/session/${sessionId}`, 'DELETE');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * POST /session/:id/rename - 会话改名
+   * 返回 true 表示改名成功；false 表示未改名（不存在 404 / 参数错误 400）。
+   */
+  async renameSession(sessionId: string, caption: string): Promise<boolean> {
+    try {
+      const body = JSON.stringify({ caption });
+      await this.request(`/session/${sessionId}/rename`, 'POST', body);
+      return true;
+    } catch {
+      return false;
     }
   }
 

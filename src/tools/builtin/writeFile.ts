@@ -6,6 +6,7 @@ import { writeFile as fsWriteFile, mkdir } from 'fs/promises';
 import path from 'path';
 import type { AliceTool, ToolResult } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { checkpointService } from '../../services/checkpoint.js';
 import { z } from 'zod/v4';
 import { requiredNonEmptyString, encodingEnum } from '../zodPrimitives.js';
 
@@ -57,6 +58,8 @@ export const writeFileTool: AliceTool = {
 
       const dir = path.dirname(resolvedPath);
       await mkdir(dir, { recursive: true });
+      // checkpointing（默认关闭）：已存在文件在覆写前快照，行为与开关关闭时完全一致
+      await checkpointService.snapshotBeforeWrite(resolvedPath);
       await fsWriteFile(resolvedPath, content, encoding as BufferEncoding);
 
       const size = Buffer.byteLength(content, encoding as BufferEncoding);

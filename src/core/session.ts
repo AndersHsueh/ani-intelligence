@@ -9,8 +9,52 @@ export class SessionManager {
   private sessionDir: string;
   private currentSession: Session | null = null;
 
-  constructor() {
-    this.sessionDir = path.join(configManager.getConfigDir(), 'sessions');
+  /**
+   * @param baseDir 可选基目录（测试注入临时目录用，HOME 隔离）；
+   *                缺省保持向后兼容，仍使用 configManager.getConfigDir()。
+   */
+  constructor(baseDir?: string) {
+    this.sessionDir = path.join(baseDir ?? configManager.getConfigDir(), 'sessions');
+  }
+
+  /** 只读 getter：返回会话文件所在目录（<base>/sessions），供调用方做隔离校验。 */
+  getSessionDir(): string {
+    return this.sessionDir;
+  }
+
+  /**
+   * 删除指定会话文件。
+   * - id 为当前会话时返回 false 且不删任何文件（防删当前）；
+   * - 会话文件不存在时返回 false（幂等，不抛异常）；
+   * - 成功删除返回 true。
+   */
+  async deleteSession(id: string): Promise<boolean> {
+    if (this.currentSession && id === this.currentSession.id) {
+      return false;
+    }
+    try {
+      const filePath = path.join(this.sessionDir, `${id}.json`);
+      await fs.access(filePath);
+      await fs.unlink(filePath);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * 设置会话标题（caption）并持久化到会话文件。
+   * 会话不存在时返回 false；成功返回 true，
+   * 之后 loadSession/listSessions 均返回新 caption。
+   */
+  async setSessionCaption(id: string, caption: string): Promise<boolean> {
+    const session = await this.loadSession(id);
+    if (!session) {
+      return false;
+    }
+    session.caption = caption;
+    await this.saveSession(session);
+    return true;
   }
 
   async init(): Promise<void> {
