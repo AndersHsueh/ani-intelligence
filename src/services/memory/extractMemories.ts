@@ -15,10 +15,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { Message } from '../../types/index.js';
+import { extractTextContent } from '../../utils/textContent.js';
 
 export interface ExtractMemoriesDeps {
   /** 输入对话 transcript,输出 markdown bullet 列表文本 */
-  summarize: (transcript: string) => Promise<string>;
+  summarize: (transcript: string) => Promise<unknown>;
   /** 记忆目录(生产为 ~/.alice/memories,测试可覆盖) */
   memoryDir: string;
   now?: () => Date;
@@ -89,7 +90,7 @@ export async function extractMemories(
   if (!transcript) return { bullets: [], filePath };
 
   const raw = await deps.summarize(EXTRACT_PROMPT + transcript);
-  const bullets = parseBullets(raw, maxBullets);
+  const bullets = parseBullets(extractTextContent(raw), maxBullets);
   if (bullets.length < minBullets) return { bullets, filePath };
 
   const now = deps.now?.() ?? new Date();

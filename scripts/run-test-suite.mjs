@@ -45,6 +45,7 @@ const SUITES = {
     'test-issue-018-cli.ts',
     'test-runner-timeout.ts',
     'test-llm-abort.ts',
+    'test-issue-022-runtime-boundaries.ts',
     // TUI 功能融合（tui-sync）先红测试：TDD 第一阶段，功能未实现时应红。
     'test-tui-sync-compact-mode.ts',
     'test-tui-sync-osc.ts',

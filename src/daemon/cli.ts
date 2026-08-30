@@ -39,6 +39,16 @@ async function pollDefaultChannelStatus(): Promise<string> {
   return chalk.yellow('Default Channel: Feishu, Connect Failed.');
 }
 
+/** 启动命令只有在 daemon API 真正可连接后才报告成功。 */
+async function waitUntilDaemonReady(): Promise<void> {
+  const { DaemonClient, waitForDaemonReady } = await import('../utils/daemonClient.js');
+  const client = new DaemonClient(1000);
+  await waitForDaemonReady(async () => {
+    await client.getStatusDirect();
+    return true;
+  });
+}
+
 // 显示 TUI Banner
 function showBanner() {
   const banner = figlet.textSync('Veronica', {
@@ -73,6 +83,7 @@ program
       const isRunning = await processManager.isRunning();
       if (isRunning) {
         const pid = await processManager.getPid();
+        await waitUntilDaemonReady();
         console.log(`✓ Daemon 已在运行 (PID: ${pid})`);
         process.exit(0);
       }
@@ -84,6 +95,7 @@ program
         await daemonConfigManager.setTransport('unix-socket');
       }
       const pid = await processManager.start();
+      await waitUntilDaemonReady();
       console.log(`✓ Daemon 已启动 (PID: ${pid})${opts.http ? ' [HTTP]' : ''}`);
 
       const config = daemonConfigManager.get();
@@ -133,6 +145,7 @@ program
         await daemonConfigManager.setTransport(opts.http ? 'http' : 'unix-socket');
       }
       await processManager.restart();
+      await waitUntilDaemonReady();
       console.log('✓ Daemon 已重启，配置已重新加载');
       process.exit(0);
     } catch (error: unknown) {

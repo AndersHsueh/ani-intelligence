@@ -9,6 +9,7 @@ import type { TokenUsage } from './base.js';
 import type { Message, ProviderSpecificConfig } from '../../types/index.js';
 import type { OpenAIFunction, ToolCall } from '../../types/tool.js';
 import { getErrorMessage } from '../../utils/error.js';
+import { extractTextContent } from '../../utils/textContent.js';
 
 type AnthropicRole = 'user' | 'assistant';
 
@@ -170,7 +171,7 @@ export class AnthropicProvider extends BaseProvider {
 
   async chat(messages: Message[], signal?: AbortSignal): Promise<string> {
     const response = await this.makeRequest(messages, [], signal);
-    return response.content || '';
+    return extractTextContent(response.content);
   }
 
   async *chatStream(messages: Message[]): AsyncGenerator<string> {
@@ -347,7 +348,11 @@ export class AnthropicProvider extends BaseProvider {
     }
   }
 
-  private async makeRequest(messages: Message[], tools: OpenAIFunction[], signal?: AbortSignal): Promise<any> {
+  private async makeRequest(
+    messages: Message[],
+    tools: OpenAIFunction[],
+    signal?: AbortSignal,
+  ): Promise<{ content?: unknown }> {
     const apiMessages = this.buildAnthropicMessages(messages);
     
     const requestBody: AnthropicMessagesRequest = {
@@ -379,6 +384,6 @@ export class AnthropicProvider extends BaseProvider {
       signal,
     });
 
-    return response.data;
+    return response.data as { content?: unknown };
   }
 }

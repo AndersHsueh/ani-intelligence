@@ -15,6 +15,7 @@ import { createSlashHandler, type SlashHandler } from './slashHandler.js';
 import type { SpawnEvent } from './coordinator/profileRegistry.js';
 import type { RunAgentsEvent } from './concurrentAgentRunner.js';
 import { abortReason, throwIfAborted } from './coordinator/abort.js';
+import { extractTextContent } from '../../utils/textContent.js';
 
 const THINK_CLOSE_TAG = '</think>';
 
@@ -100,7 +101,7 @@ async function* yieldSlashResult(
   };
 }
 
-async function generateCaption(
+export async function generateCaption(
   existingCaption: string | undefined,
   messages: Message[],
   client: any,
@@ -129,9 +130,11 @@ async function generateCaption(
     let summary = '';
     const captionMessages = [{ role: 'user', content: prompt, timestamp: new Date() }];
     if (signal && typeof client.chat === 'function') {
-      summary = await client.chat(captionMessages, signal);
+      summary = extractTextContent(await client.chat(captionMessages, signal));
     } else {
-      for await (const chunk of client.chatStream(captionMessages)) summary += chunk;
+      for await (const chunk of client.chatStream(captionMessages)) {
+        summary += extractTextContent(chunk);
+      }
     }
     summary = summary.trim().replace(/[.!?]+$/, '').slice(0, 60);
     if (!summary) return existingCaption;

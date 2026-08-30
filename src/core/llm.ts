@@ -16,6 +16,7 @@ import {
 } from '../runtime/agent/tokenBudget.js';
 import type { ModelRegistry } from '../daemon/modelRegistry.js';
 import { obtainTracer } from '../observability/spans.js';
+import { extractTextContent } from '../utils/textContent.js';
 
 /**
  * 工具参数自修重试上限(IK8MWO #9):超过该次数仍校验失败 → 报错给用户
@@ -135,7 +136,7 @@ export class LLMClient {
 
   async chat(messages: Message[], signal?: AbortSignal): Promise<string> {
     try {
-      return await this.provider.chat(messages, signal);
+      return extractTextContent(await this.provider.chat(messages, signal));
     } catch (error) {
       if (signal?.aborted) throw error;
       // 如果主 provider 失败且存在降级 provider，尝试降级
@@ -144,7 +145,7 @@ export class LLMClient {
         console.warn(`💡 提示：运行 'alice --test-model' 重新测速并更新推荐模型\n`);
         
         try {
-          return await this.fallbackProvider.chat(messages, signal);
+          return extractTextContent(await this.fallbackProvider.chat(messages, signal));
         } catch (fallbackError) {
           if (signal?.aborted) throw fallbackError;
           throw new Error(`主模型和备用模型均失败\n主模型错误: ${error instanceof Error ? error.message : '未知错误'}\n备用模型错误: ${fallbackError instanceof Error ? fallbackError.message : '未知错误'}`);

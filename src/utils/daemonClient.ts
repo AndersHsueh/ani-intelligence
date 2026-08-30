@@ -18,6 +18,39 @@ import { configManager } from './config.js';
 
 export type { ChatStreamEvent };
 
+export const DAEMON_READY_TIMEOUT_MS = 30_000;
+export const DAEMON_READY_POLL_INTERVAL_MS = 250;
+
+/**
+ * Wait until the daemon accepts a real API request. A PID only proves that
+ * the process exists; service initialization (notably MCP) may still be in
+ * progress and the socket may not have been created yet.
+ */
+export async function waitForDaemonReady(
+  check: () => Promise<boolean>,
+  options: { timeoutMs?: number; intervalMs?: number } = {},
+): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? DAEMON_READY_TIMEOUT_MS;
+  const intervalMs = options.intervalMs ?? DAEMON_READY_POLL_INTERVAL_MS;
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+
+  while (true) {
+    try {
+      if (await check()) return;
+    } catch (error: unknown) {
+      lastError = error;
+    }
+
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      const detail = lastError instanceof Error ? `: ${lastError.message}` : '';
+      throw new Error(`等待 daemon 就绪超时（${timeoutMs}ms）${detail}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, Math.min(intervalMs, remaining)));
+  }
+}
+
 export class DaemonClient {
   private config: DaemonConfig | null = null;
   private timeout: number;
@@ -48,14 +81,9 @@ export class DaemonClient {
     console.log('Daemon 未运行，正在启动...');
     await this.startDaemon(config.transport);
 
-    // 等待 3 秒后重试（daemon 启动通常很快）
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    // 再次检查
-    const isRunningAfterWait = await this.checkDaemonRunning();
-    if (!isRunningAfterWait) {
-      throw new Error('服务启动失败：启动后无法连接到 daemon');
-    }
+    // The start command can return while the process is alive but still
+    // initializing services. Poll the actual transport until it is ready.
+    await waitForDaemonReady(() => this.checkDaemonRunning());
   }
 
   /**
