@@ -182,6 +182,8 @@ export const contextCommand: SlashCommand = {
   description:
     'Show context window usage breakdown. Use "/context detail" for per-item breakdown.',
   kind: CommandKind.BUILT_IN,
+  // qwen-code 专属：token 估算基于 qwen 假设
+  hidden: true,
   action: async (context: CommandContext, args?: string) => {
     const showDetails =
       args?.trim().toLowerCase() === 'detail' ||

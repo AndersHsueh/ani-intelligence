@@ -277,6 +277,8 @@ export const hooksCommand: SlashCommand = {
     return t('Manage Qwen Code hooks');
   },
   kind: CommandKind.BUILT_IN,
+  // qwen-code 专属：ALICE 无 hook 系统
+  hidden: true,
   subCommands: [listCommand, enableCommand, disableCommand],
   action: async (
     context: CommandContext,

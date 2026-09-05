@@ -16,6 +16,8 @@ import { t, getCurrentLanguage } from '../../i18n/index.js';
 
 export const docsCommand: SlashCommand = {
   name: 'docs',
+  // qwen-code 专属：应指向 ALICE 文档
+  hidden: true,
   get description() {
     return t('open full Qwen Code documentation in your browser');
   },

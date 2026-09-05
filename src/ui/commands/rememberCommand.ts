@@ -14,6 +14,8 @@ import { CommandKind } from './types.js';
 export const rememberCommand: SlashCommand = {
   name: 'remember',
   description: 'Save a durable memory (append to QWEN.md via the agent)',
+  // qwen-code 专属：ALICE 使用 ~/.alice/memories/
+  hidden: true,
   kind: CommandKind.BUILT_IN,
   action: (
     _context: CommandContext,

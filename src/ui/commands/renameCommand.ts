@@ -42,6 +42,8 @@ export const renameCommand: SlashCommand = {
   altNames: ['tag'],
   kind: CommandKind.BUILT_IN,
   description: 'Rename the current conversation',
+  // qwen-code 专属：ALICE 会话管理在 daemon 侧
+  hidden: true,
   action: async (context: CommandContext, args: string): Promise<
     | { type: 'message'; messageType: 'info' | 'error'; content: string }
     | undefined

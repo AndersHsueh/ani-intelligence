@@ -17,6 +17,8 @@ import { t } from '../../i18n/index.js';
 
 export const bugCommand: SlashCommand = {
   name: 'bug',
+  // qwen-code 专属：应指向 ALICE repo
+  hidden: true,
   get description() {
     return t('submit a bug report');
   },

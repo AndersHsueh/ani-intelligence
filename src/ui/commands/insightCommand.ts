@@ -19,6 +19,8 @@ const logger = createDebugLogger('DataProcessor');
 
 export const insightCommand: SlashCommand = {
   name: 'insight',
+  // qwen-code 专属：ALICE 无 qwen-code 聊天历史分析
+  hidden: true,
   get description() {
     return t(
       'generate personalized programming insights from your chat history',

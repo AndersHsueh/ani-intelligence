@@ -161,6 +161,8 @@ export const ideCommand = async (): Promise<SlashCommand> => {
     },
     kind: CommandKind.BUILT_IN,
     subCommands: [],
+    // qwen-code 专属：ALICE 无 IDE
+    hidden: true,
   };
 
   const statusCommand: SlashCommand = {

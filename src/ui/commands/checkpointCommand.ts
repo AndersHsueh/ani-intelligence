@@ -101,6 +101,8 @@ const statusCommand: SlashCommand = {
 export const checkpointCommand: SlashCommand = {
   name: 'checkpoint',
   description: '管理文件快照（list / restore <id> / status）',
+  // qwen-code 专属：ALICE 无 checkpoint 机制
+  hidden: true,
   kind: CommandKind.BUILT_IN,
   subCommands: [listCommand, restoreCommand, statusCommand],
   action: (context) => statusAction(context),

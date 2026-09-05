@@ -13,6 +13,8 @@ import { runDoctorChecks } from '../utils/doctorChecks.js';
 export const doctorCommand: SlashCommand = {
   name: 'doctor',
   description: 'Run installation and environment diagnostics',
+  // qwen-code 专属：ALICE 架构不同
+  hidden: true,
   kind: CommandKind.BUILT_IN,
   action: async (context: CommandContext) => {
     const executionMode = context.executionMode ?? 'interactive';

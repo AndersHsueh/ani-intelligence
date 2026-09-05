@@ -16,6 +16,8 @@ import { ApprovalMode } from '@qwen-code/qwen-code-core';
 export const planCommand: SlashCommand = {
   name: 'plan',
   description: 'Switch to plan mode or exit plan mode',
+  // qwen-code 专属：ALICE 使用 approval-mode
+  hidden: true,
   kind: CommandKind.BUILT_IN,
   action: async (
     context: CommandContext,

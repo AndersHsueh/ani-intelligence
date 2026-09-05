@@ -99,6 +99,8 @@ export const setupGithubCommand: SlashCommand = {
     return t('Set up GitHub Actions');
   },
   kind: CommandKind.BUILT_IN,
+  // qwen-code 专属：ALICE 无 qwen-dispatch
+  hidden: true,
   action: async (
     context: CommandContext,
   ): Promise<SlashCommandActionReturn> => {

@@ -54,6 +54,7 @@ const SUITES = {
     'test-tui-sync-slash-completion.ts',
     'test-tui-sync-checkpoint.ts',
     'test-tui-sync-new-commands.ts',
+    'test-tui-sync-hidden-commands.ts',
   ],
   // These are intentionally opt-in. They exercise release-boundary contracts
   // and are called by `verify` after the single final release build/smoke;

@@ -6,7 +6,7 @@
 
 🤖 **ALICE** - 基于大语言模型的智能办公助手
 
-[![Version](https://img.shields.io/badge/version-3.1.2-blue.svg)](https://gitee.com/andershsueh/alice-cli/tree/v3.1.2)
+[![Version](https://img.shields.io/badge/version-3.1.3-blue.svg)](https://gitee.com/andershsueh/alice-cli/tree/v3.1.3)
 [![License](https://img.shields.io/badge/license-MulanPSL2-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Bun](https://img.shields.io/badge/bun-%3E%3D1.0.0-f9f1df.svg?logo=bun)](https://bun.sh)
@@ -44,6 +44,11 @@ ALICE 是一个现代化的命令行 AI 助手，支持 Function Calling 工具�
 - 🔌 **Shim 适配层**：通过 `src/shim/` 适配层将 qwen-code TUI 对接 Alice 的 daemon 后端，后端零修改
 - ⚡ **useAliceStream**：全新流式适配器，将 Alice daemon 的 `ChatStreamEvent` 无缝映射到 qwen-code TUI 的消息历史系统
 - 🎨 **功能丰富**：代码高亮、Markdown 渲染、工具调用可视化、会话管理、Vim 模式、多主题等全部开箱即用
+
+### 🚀 v3.1.3 亮点（TUI 命令过滤）
+
+- 🧹 **隐藏 qwen-code 专属命令**：14 个 qwen-code IDE 专属命令（`ide`、`extensions`、`hooks`、`terminal-setup`、`setup-github`、`insight`、`doctor`、`docs`、`bug`、`remember`、`checkpoint`、`context`、`rename`、`plan`）添加 `hidden: true`，不再出现在 ALICE 的斜杠命令补全列表中
+- 🧪 **回归测试**：新增 `test-tui-sync-hidden-commands.ts` 验证 14 个命令的 `hidden` 属性；全量测试 39/39 脚本、1197 PASS / 0 FAIL
 
 ### 🚀 v3.1.2 亮点（可信赖 Code Agent 闭环）
 

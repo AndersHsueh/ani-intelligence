@@ -244,6 +244,8 @@ export const extensionsCommand: SlashCommand = {
     return t('Manage extensions');
   },
   kind: CommandKind.BUILT_IN,
+  // qwen-code 专属：ALICE 使用 plugin 体系
+  hidden: true,
   subCommands: [
     manageExtensionsCommand,
     installCommand,

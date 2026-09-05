@@ -17,6 +17,8 @@ import { t } from '../../i18n/index.js';
  */
 export const terminalSetupCommand: SlashCommand = {
   name: 'terminal-setup',
+  // qwen-code 专属：ALICE 无 IDE 键绑定
+  hidden: true,
   get description() {
     return t(
       'Configure terminal keybindings for multiline input (VS Code, Cursor, Windsurf, Trae)',
