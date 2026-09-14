@@ -6,6 +6,7 @@ import * as jsonc from 'jsonc-parser';
 import type { Config, ModelConfig, UIConfig } from '../types/index.js';
 import type { LegacyConfig } from '../types/legacyConfig.js';
 import { KeybindingManager, parseKeybindings } from '../core/keybindings.js';
+import { withFileLock, atomicWriteFile } from './fileLock.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -97,8 +98,8 @@ export class ConfigManager {
         cron_task_model: typeof cronTaskModel === 'string' ? cronTaskModel : undefined,
       };
 
-      // 解析环境变量
-      this.resolveEnvVars(config);
+      // S0 修复:不再就地改写 config.models[].apiKey —— 保留原始占位符字符串,
+      // 让后续 save 能写回原始 ${VAR} 形态。运行时通过 getResolvedApiKey() 现算真实值。
 
       this.config = config;
       return this.config;
@@ -111,8 +112,20 @@ export class ConfigManager {
   async save(config: Config): Promise<void> {
     // 构建带注释的 JSONC 内容
     const content = this.buildJsoncContent(config);
-    await fs.writeFile(this.settingsPath, content, 'utf-8');
+    // S0 修复:tmp + rename 原子写 + 跨进程文件锁,防止并发写丢更新与中途崩溃截断
+    await withFileLock(this.settingsPath, () =>
+      atomicWriteFile(this.settingsPath, content),
+    );
     this.config = config;
+  }
+
+  /**
+   * **TESTING ONLY**:重定向 settingsPath 到指定路径。
+   * 命名加 __ 前缀 + 后缀 ForTesting 显式标记,避免生产代码误用。
+   * 生产调用路径绝对不要触发这个方法。
+   */
+  __setSettingsPathForTesting(customPath: string): void {
+    this.settingsPath = customPath;
   }
 
   get(): Config {
@@ -150,6 +163,17 @@ export class ConfigManager {
 
   getModel(modelName: string): ModelConfig | undefined {
     return this.config?.models.find(m => m.name === modelName);
+  }
+
+  /**
+   * 运行时解析 apiKey:把配置里的 `${VAR}` 占位符替换为 process.env[VAR] 的值。
+   * 与原 `resolveEnvVars` 不同,这个方法**不污染**内存中的 config 对象,
+   * 只是按需返回解析后的字符串,供 LLM 客户端 / Provider 真实调用时使用。
+   * 返回空串表示原值就是空(没有占位符)。
+   */
+  getResolvedApiKey(modelName: string): string {
+    const raw = this.getModel(modelName)?.apiKey ?? '';
+    return ConfigManager.resolveEnvVar(raw);
   }
 
   getDefaultModel(): ModelConfig | undefined {
@@ -221,19 +245,14 @@ export class ConfigManager {
     return 'You are ALICE, an AI office assistant.';
   }
 
-  private resolveEnvVars(config: Config): void {
-    // 解析所有模型配置中的环境变量
-    for (const model of config.models) {
-      if (model.apiKey) {
-        model.apiKey = this.resolveEnvVar(model.apiKey);
-      }
-    }
-  }
-
-  private resolveEnvVar(value: string): string {
+  /**
+   * 把 `${VAR}` 占位符替换为 process.env[VAR] 的值。空 / 无占位符 / env 缺失时返回原值或空串。
+   * 纯函数,无副作用,可作为静态工具使用。
+   */
+  static resolveEnvVar(value: string): string {
     const envVarPattern = /\$\{([A-Z_][A-Z0-9_]*)\}/g;
     return value.replace(envVarPattern, (_, varName) => {
-      return process.env[varName] || '';
+      return process.env[varName] ?? '';
     });
   }
 

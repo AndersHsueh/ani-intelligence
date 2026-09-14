@@ -15,6 +15,9 @@
 
 import type { SpawnEvent, SpawnRequest, SpawnDeps } from './profileRegistry.js';
 import { awaitWithSignal, throwIfAborted } from './abort.js';
+import type { AgentProfile } from './agentProfile.js';
+import type { ModelConfig } from '../../../types/index.js';
+import { modelRegistry } from '../../../daemon/services.js';
 
 export interface ConsultantRunnerOptions {
   /**
@@ -60,10 +63,11 @@ export async function* runConsultant(
   request: SpawnRequest,
   deps: SpawnDeps,
   opts: ConsultantRunnerOptions = {},
+  profile?: AgentProfile,
 ): AsyncGenerator<SpawnEvent> {
   const min = opts.minTopics ?? DEFAULT_MIN;
   const max = opts.maxTopics ?? DEFAULT_MAX;
-  const summarize = opts.summarize ?? defaultSummarize(deps);
+  const summarize = opts.summarize ?? defaultSummarize(deps, profile, modelRegistry);
 
   let topics: string[] = [];
   try {
@@ -102,13 +106,32 @@ function buildConsultantPrompt(userPrompt: string): string {
   ].join('\n');
 }
 
-/** 默认 summarize:从 baseDeps 派生 chat 客户端,做非流式调用。 */
-function defaultSummarize(deps: SpawnDeps): (p: string, signal?: AbortSignal) => Promise<string> {
+/** 默认 summarize:从 baseDeps 派生 chat 客户端,做非流式调用。
+ *  S0 修复:profile + multi_model_routing 时按 profile.capability 走 selectModel;
+ *  否则 fallback 到 default_model(向后兼容)。 */
+function defaultSummarize(
+  deps: SpawnDeps,
+  profile?: AgentProfile,
+  registry: typeof modelRegistry = modelRegistry,
+): (p: string, signal?: AbortSignal) => Promise<string> {
   return async (prompt: string, signal?: AbortSignal): Promise<string> => {
     const cfg = deps.baseDeps.getConfig();
-    const model = deps.baseDeps.getDefaultModel() ?? cfg.models[0];
+    const model = selectModelForProfile(cfg, profile, registry);
     if (!model) throw new Error('consultant runner:无默认模型');
     const client = deps.baseDeps.getLLMClient(model, '你是咨询顾问,负责提炼议题。');
     return client.chat([{ role: 'user', content: prompt, timestamp: new Date() }], signal);
   };
+}
+
+/** 根据 profile.capability 选模型;multi_model_routing 关闭或 registry 未初始化时退化为 default_model。 */
+function selectModelForProfile(
+  cfg: { models: ModelConfig[]; default_model: string; multi_model_routing?: boolean },
+  profile: AgentProfile | undefined,
+  registry: typeof modelRegistry,
+): ModelConfig | undefined {
+  if (profile && cfg.multi_model_routing && registry) {
+    const name = registry.selectModel(profile.capability);
+    return cfg.models.find((m) => m.name === name);
+  }
+  return cfg.models.find((m) => m.name === cfg.default_model) ?? cfg.models[0];
 }

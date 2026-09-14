@@ -25,7 +25,7 @@ export class MistralProvider extends OpenAICompatibleProvider {
   /**
    * 重写 testConnection 以适配 Mistral 响应格式
    */
-  async testConnection(): Promise<{ success: boolean; speed: number; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; speed: number; completionTokens?: number; error?: string }> {
     // Mistral API 兼容 OpenAI，直接调用父类方法
     return super.testConnection();
   }

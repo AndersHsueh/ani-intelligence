@@ -316,11 +316,11 @@ export class AnthropicProvider extends BaseProvider {
     yield result;
   }
 
-  async testConnection(): Promise<{ success: boolean; speed: number; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; speed: number; completionTokens?: number; error?: string }> {
     const startTime = Date.now();
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${this.config.baseURL}/v1/messages`,
         {
           model: this.config.model,
@@ -338,7 +338,10 @@ export class AnthropicProvider extends BaseProvider {
       );
 
       const speed = (Date.now() - startTime) / 1000;
-      return { success: true, speed };
+      // S0 修复:读取 usage.output_tokens 供 modelRegistry 算 tokensPerSec
+      const usage = (response.data as { usage?: { output_tokens?: number } } | undefined)?.usage;
+      const completionTokens = typeof usage?.output_tokens === 'number' ? usage.output_tokens : undefined;
+      return { success: true, speed, completionTokens };
     } catch (error: unknown) {
       return {
         success: false,

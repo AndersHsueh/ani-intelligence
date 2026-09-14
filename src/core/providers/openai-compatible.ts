@@ -134,26 +134,29 @@ export class OpenAICompatibleProvider extends BaseProvider {
     }
   }
 
-  async testConnection(): Promise<{ success: boolean; speed: number; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; speed: number; completionTokens?: number; error?: string }> {
     const startTime = Date.now();
-    
+
     try {
-      const testMessage: Message = {
-        role: 'user',
-        content: 'Hello',
-        timestamp: new Date(),
-      };
+      // S0 修复:直接发 HTTP 请求(不走 chat())以便从响应里读 usage.completion_tokens
+      const response = await this.client.post(
+        '/chat/completions',
+        {
+          model: this.config.model,
+          messages: [{ role: 'user', content: 'Hello' }],
+          max_tokens: 10,
+        },
+      );
 
-      await this.chat([testMessage]);
-      
       const endTime = Date.now();
-      const speed = (endTime - startTime) / 1000; // 转换为秒
-
-      return { success: true, speed };
+      const speed = (endTime - startTime) / 1000;
+      const usage = (response.data as { usage?: { completion_tokens?: number } } | undefined)?.usage;
+      const completionTokens = typeof usage?.completion_tokens === 'number' ? usage.completion_tokens : undefined;
+      return { success: true, speed, completionTokens };
     } catch (error) {
       const endTime = Date.now();
       const speed = (endTime - startTime) / 1000;
-      
+
       return {
         success: false,
         speed,

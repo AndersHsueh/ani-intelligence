@@ -40,7 +40,12 @@ export abstract class BaseProvider {
 
   abstract chat(messages: Message[], signal?: AbortSignal): Promise<string>;
   abstract chatStream(messages: Message[]): AsyncGenerator<string>;
-  abstract testConnection(): Promise<{ success: boolean; speed: number; error?: string }>;
+  /**
+   * S0 修复:返回 completionTokens 用于 modelRegistry 算 tokensPerSec。
+   * speed 语义保持"总耗时秒"(不是 tokens/sec,这是历史命名,不重命名以免破坏现有调用)。
+   * completionTokens 可选 —— 旧实现/provider 拿不到时省略,modelRegistry 会 fallback 到 null。
+   */
+  abstract testConnection(): Promise<{ success: boolean; speed: number; completionTokens?: number; error?: string }>;
 
   // 新增：带工具的对话方法
   abstract chatWithTools(

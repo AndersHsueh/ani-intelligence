@@ -313,7 +313,8 @@ export class ModelRegistry {
         {
           baseURL: model.baseURL,
           model: model.model,
-          apiKey: model.apiKey,
+          // S0 修复:运行时现算 apiKey,避免探测请求带原始 ${VAR} 占位符
+          apiKey: configManager.getResolvedApiKey(model.name),
           temperature: model.temperature,
           maxTokens: model.maxTokens,
         },
@@ -331,6 +332,13 @@ export class ModelRegistry {
         profile.consecutiveFailures = 0
         profile.cooldownUntil = null
         profile.markedObsolete = false
+        // S0 修复:用 provider 返回的 completionTokens + 实际耗时计算 tokensPerSec
+        // speed 是 provider.testConnection 返回的耗时秒(可能与 latencyMs 略有差异,
+        // 因为 latencyMs 包含 result 对象序列化等),用 result.speed 更接近真实生成耗时。
+        if (typeof result.completionTokens === 'number' && result.completionTokens > 0
+            && typeof result.speed === 'number' && result.speed > 0) {
+          profile.tokensPerSec = result.completionTokens / result.speed
+        }
       } else {
         profile.available = false
       }

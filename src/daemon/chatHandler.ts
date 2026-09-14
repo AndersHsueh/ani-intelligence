@@ -5,7 +5,7 @@
 import type { Message } from '../types/index.js';
 import type { ChatStreamRequest, ChatStreamEvent } from '../types/chatStream.js';
 import { configManager } from '../utils/config.js';
-import { getConfig, getSystemPrompt, getLLMClient, getSessionManager } from './services.js';
+import { getConfig, getSystemPrompt, getLLMClient, getSessionManager, getAgentMode } from './services.js';
 import type { DaemonLogger } from './logger.js';
 import { createRuntime } from '../runtime/kernel/createRuntime.js';
 import { fireAndForgetExtractMemories, getSessionMemory } from '../services/memory/index.js';
@@ -20,6 +20,8 @@ export interface ChatStreamRuntimeOverrides {
   getSystemPrompt?: typeof getSystemPrompt;
   getLLMClient?: typeof getLLMClient;
   getSessionManager?: typeof getSessionManager;
+  /** S0 修复:允许测试注入 agentMode(默认用 services.getAgentMode 当前值) */
+  getAgentMode?: typeof getAgentMode;
   getRelevantMemories?: (prompt: string, topK?: number) => Promise<string[]>;
   /** session close hook；默认 fireAndForgetExtractMemories。 */
   extractMemories?: (sessionId: string, messages: Message[], logger: DaemonLogger) => void;
@@ -48,6 +50,8 @@ export async function* runChatStream(
     getSystemPrompt: overrides.getSystemPrompt ?? getSystemPrompt,
     getLLMClient: overrides.getLLMClient ?? getLLMClient,
     getSessionManager: overrides.getSessionManager ?? getSessionManager,
+    // S0 修复:把当前 agentMode 透传给 agentLoop,让 inferCapability 跟随 mode
+    getAgentMode: overrides.getAgentMode ?? getAgentMode,
     // 跨 session 记忆召回(IK8MWH #2)
     getRelevantMemories: overrides.getRelevantMemories ?? ((prompt) => getSessionMemory().getRelevantMemories(prompt, 5)),
   };

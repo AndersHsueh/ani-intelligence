@@ -101,7 +101,8 @@ export class LLMClient {
       {
         baseURL: modelConfig.baseURL,
         model: modelConfig.model,
-        apiKey: modelConfig.apiKey,
+        // S0 修复:运行时现算 apiKey,避免 LLM client 拿到原始 ${VAR} 占位符
+        apiKey: configManager.getResolvedApiKey(modelConfig.name),
         temperature: modelConfig.temperature,
         maxTokens: modelConfig.maxTokens,
         promptCaching: modelConfig.promptCaching,
@@ -125,7 +126,8 @@ export class LLMClient {
         {
           baseURL: suggestModel.baseURL,
           model: suggestModel.model,
-          apiKey: suggestModel.apiKey,
+          // S0 修复:同主 provider,运行时现算
+          apiKey: configManager.getResolvedApiKey(suggestModel.name),
           temperature: suggestModel.temperature,
           maxTokens: suggestModel.maxTokens,
         },

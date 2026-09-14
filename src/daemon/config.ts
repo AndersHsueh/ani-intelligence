@@ -10,6 +10,7 @@ import * as jsonc from 'jsonc-parser';
 import type { DaemonConfig, TransportType, ChannelsConfig } from '../types/daemon.js';
 import { DEFAULT_DAEMON_CONFIG } from '../types/daemon.js';
 import { getErrorMessage } from '../utils/error.js';
+import { withFileLock, atomicWriteFile } from '../utils/fileLock.js';
 
 /** 合并通道配置，环境变量覆盖文件（ALICE_FEISHU_APPID / ALICE_FEISHU_APP_SECRET） */
 function mergeChannelsConfig(parsed: ChannelsConfig | undefined): ChannelsConfig {
@@ -162,8 +163,20 @@ export class DaemonConfigManager {
       '',
     ].join('\n');
 
-    await fs.writeFile(this.configPath, content, 'utf-8');
+    // S0 修复:tmp + rename 原子写 + 跨进程文件锁,防止并发写丢更新与中途崩溃截断
+    await withFileLock(this.configPath, () =>
+      atomicWriteFile(this.configPath, content),
+    );
     this.config = config;
+  }
+
+  /**
+   * **TESTING ONLY**:重定向 configPath 到指定路径。
+   * 命名加 __ 前缀 + 后缀 ForTesting 显式标记,避免生产代码误用。
+   * 生产调用路径绝对不要触发这个方法。
+   */
+  __setConfigPathForTesting(customPath: string): void {
+    this.configPath = customPath;
   }
 
   /**

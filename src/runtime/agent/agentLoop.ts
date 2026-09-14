@@ -32,6 +32,8 @@ export interface AgentLoopDependencies {
   getSystemPrompt(): Promise<string>;
   getLLMClient(modelConfig: ModelConfig, systemPrompt: string): any;
   getSessionManager(): RuntimeSessionManagerLike;
+  /** S0 修复:把当前 agentMode 传给 inferCapability(可选,默认 'office') */
+  getAgentMode?(): 'office' | 'coder';
   /** 可选:召回与 prompt 相关的跨 session 历史记忆(IK8MWH #2);runner 可传 topK 透传给 SessionMemory */
   getRelevantMemories?(prompt: string, topK?: number): Promise<string[]>;
   /** 可选:多 Agent coordinator spawn 入口(IK8MWM #7)。默认 noop,接 spawnCoordinator 后 /consult /research 即生效 */
@@ -46,8 +48,10 @@ export interface AgentLoopDependencies {
  * 根据请求内容推断任务能力需求
  * office 模式下：短文本 → format，长文本 → writing
  * coder 模式下：含架构/分析关键词 → reasoning，否则 → code
+ *
+ * S0 修复:export 给单元测试用(测试 agentMode 透传);production 也允许直接调用。
  */
-function inferCapability(req: RuntimeChatRequest, agentMode?: string): ModelCapabilityTier {
+export function inferCapability(req: RuntimeChatRequest, agentMode?: string): ModelCapabilityTier {
   const text = req.message ?? ''
 
   if (agentMode === 'coder') {
@@ -257,7 +261,8 @@ export async function* runAgentLoop(
   }
 
   // 若启用异构路由，用 inferCapability + selectModel 覆盖 default 选择
-  const capability = inferCapability(req);
+  // S0 修复:传 agentMode,让 capability 跟随当前 mode 走(office→format/writing,coder→code/reasoning)
+  const capability = inferCapability(req, deps.getAgentMode?.());
   if (!req.model && modelRegistry && config.multi_model_routing) {
     const routedName = modelRegistry.selectModel(capability);
     const routedConfig = config.models.find(m => m.name === routedName);

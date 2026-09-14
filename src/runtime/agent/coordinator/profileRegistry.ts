@@ -169,12 +169,17 @@ const PROFILES: readonly AgentProfile[] = [
   },
 ];
 
-/** profile 名 → 对应 runner 的查表(简化 dispatch;新增 spawnable profile 时挂一行) */
-const RUNNERS: Record<string, (req: SpawnRequest, deps: SpawnDeps) => AsyncGenerator<SpawnEvent>> = {
-  consultant: runConsultant,
-  researcher: runResearcher,
-  executor: runExecutor,
-  reviewer: runReviewer,
+/** profile 名 → 对应 runner 的查表(简化 dispatch;新增 spawnable profile 时挂一行)
+ *  S0 修复:Runner 接受第 4 个参数 profile,让 runner 按 profile.capability 选模型。
+ *  researcherRunner 不接受 profile(纯检索,无选模型语义)。 */
+const RUNNERS: Record<
+  string,
+  (req: SpawnRequest, deps: SpawnDeps, opts?: unknown, profile?: AgentProfile) => AsyncGenerator<SpawnEvent>
+> = {
+  consultant: runConsultant as never,
+  researcher: runResearcher as never,
+  executor: runExecutor as never,
+  reviewer: runReviewer as never,
 };
 
 // ───────────────────────── 公开 API ─────────────────────────
@@ -204,5 +209,6 @@ export async function* spawn(
     // 不可达:spawnable profile 必须挂 RUNNERS
     throw new Error(`internal: spawnable profile '${profile.name}' 没有对应 runner`);
   }
-  yield* runner(request, deps);
+  // S0 修复:把 profile 透传给 runner,让 runner 按 capability 选模型
+  yield* runner(request, deps, undefined, profile);
 }

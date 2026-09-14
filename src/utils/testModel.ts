@@ -47,7 +47,8 @@ export async function testAllModels(): Promise<void> {
         {
           baseURL: model.baseURL,
           model: model.model,
-          apiKey: model.apiKey,
+          // S0 修复:运行时现算 apiKey,避免测速请求带原始 ${VAR} 占位符
+          apiKey: configManager.getResolvedApiKey(model.name),
           temperature: model.temperature,
           maxTokens: model.maxTokens,
         },

@@ -218,11 +218,11 @@ export class GoogleProvider extends BaseProvider {
     yield result;
   }
 
-  async testConnection(): Promise<{ success: boolean; speed: number; error?: string }> {
+  async testConnection(): Promise<{ success: boolean; speed: number; completionTokens?: number; error?: string }> {
     const startTime = Date.now();
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${this.config.baseURL}/v1/models/${this.config.model}:generateContent`,
         {
           contents: [{ role: 'user', parts: [{ text: 'Hi' }] }]
@@ -237,7 +237,14 @@ export class GoogleProvider extends BaseProvider {
       );
 
       const speed = (Date.now() - startTime) / 1000;
-      return { success: true, speed };
+      // S0 修复:Google 返回 usageMetadata.candidatesTokenCount
+      const usage = (response.data as { usageMetadata?: { candidatesTokenCount?: number; totalTokenCount?: number } } | undefined)?.usageMetadata;
+      const completionTokens = typeof usage?.candidatesTokenCount === 'number'
+        ? usage.candidatesTokenCount
+        : typeof usage?.totalTokenCount === 'number'
+          ? usage.totalTokenCount
+          : undefined;
+      return { success: true, speed, completionTokens };
     } catch (error: unknown) {
       return {
         success: false,
