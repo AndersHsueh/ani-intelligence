@@ -356,8 +356,8 @@ async function main(): Promise<void> {
         `file 形如 HHMM-hash.md 或 HHMM-hash-N.md: ${f}`,
       );
       assert(
-        ['code', 'decision', 'manual'].includes(k),
-        `kind ∈ {code,decision,manual}: ${k}`,
+        ['code', 'decision', 'manual', 'manual-suspect'].includes(k),
+        `kind ∈ {code,decision,manual,manual-suspect}: ${k}`,
       );
       assert(at === FIXED_ISO, `at == FIXED_ISO: ${at}`);
     }
@@ -469,6 +469,121 @@ async function main(): Promise<void> {
       r.files[0].file.startsWith('1430-'),
       `本地 14:30 → HHMM="1430" (实际 ${r.files[0].file})`,
     );
+  });
+
+  // ── ⑭ issue_01 复现:自指描述里的 /raw → manual-suspect ────────
+  section('⑭ issue_01:描述性上下文中的 /raw 降级为 manual-suspect');
+  await withTmpDir('alice-rs-', async (dir) => {
+    // 等价最小复现:0915 路线图纯文本(/tmp/0915-plain.txt)第 30–38 行结构,
+    // 见 issues/issue_01.md —— /raw 是描述 rawSlicer 自身规则时残留的字面量,
+    // 前 5 行内含全部三个描述性词(规则切片器 / rawSlicer.ts / 决策句模式行)。
+    const text = [
+      '二次运行 diff 为空(幂等);非 git 目录零副作用;HOME 派生路径零写入。',
+      'P1 · 收集层',
+      '规则切片器 + 水位线',
+      'rawSlicer.ts',
+      '—— 只做规则匹配(代码块围栏 / 决策句模式 /',
+      '/raw',
+      '手动打点),',
+      '不调用 LLM',
+      ',不改写、不总结,保真不保优',
+    ].join('\n');
+
+    const r = await sliceAndPersist(dir, text, {
+      sessionId: 'sess-issue01',
+      now: FIXED_NOW,
+    });
+
+    const suspectFiles = r.files.filter((f) => f.kind === 'manual-suspect');
+    const manualFiles = r.files.filter((f) => f.kind === 'manual');
+    assert(
+      suspectFiles.length === 1,
+      `issue_01 场景命中 1 个 manual-suspect 段 (实际 ${suspectFiles.length})`,
+    );
+    assert(
+      manualFiles.length === 0,
+      `issue_01 场景不再产生纯 manual 段 (实际 ${manualFiles.length})`,
+    );
+
+    if (suspectFiles[0]) {
+      const body = await fs.readFile(suspectFiles[0].absPath, 'utf-8');
+      assert(
+        body.includes('kind: manual-suspect'),
+        'front-matter 写 kind: manual-suspect',
+      );
+      // 段内容照吞(保真不保优不变),只是 kind 降级 —— 与 issue_01 的 78 行同款行为
+      assert(
+        body.includes('不调用 LLM'),
+        'manual-suspect 段仍保真吞入触发器后续内容',
+      );
+    }
+
+    // .index.jsonl 同步写 manual-suspect
+    const idxRaw = await fs.readFile(path.join(dir, '.index.jsonl'), 'utf-8');
+    const kinds = idxRaw
+      .split('\n')
+      .filter((l) => l.length > 0)
+      .map((l) => JSON.parse(l).kind);
+    assert(
+      kinds.includes('manual-suspect'),
+      `.index.jsonl 含 manual-suspect 行 (实际 ${JSON.stringify(kinds)})`,
+    );
+  });
+
+  // ── ⑮ 反例 + 回看窗口边界:真实打点仍是 manual ──────────────────
+  section('⑮ 反例:前 5 行无描述性词 → 仍是 manual(含窗口边界)');
+  await withTmpDir('alice-rs-', async (dir) => {
+    // 反例:纯业务内容里的真实打点,前 5 行无任何描述性词
+    const realText = [
+      '今天评审了三个方案。',
+      '第一个方案关于缓存。',
+      '第二个方案关于队列。',
+      '第三个方案关于索引。',
+      '补充:大家倾向第二个。',
+      '/raw 会议里记录的真实素材',
+      '补充一行细节',
+    ].join('\n');
+
+    const r1 = await sliceAndPersist(dir, realText, {
+      sessionId: 'sess-real-manual',
+      now: FIXED_NOW,
+    });
+    const realManual = r1.files.filter((f) => f.kind === 'manual');
+    const realSuspect = r1.files.filter((f) => f.kind === 'manual-suspect');
+    assert(
+      realManual.length === 1,
+      `真实打点仍是 manual (实际 manual=${realManual.length})`,
+    );
+    assert(
+      realSuspect.length === 0,
+      `真实打点不被误降级 (实际 suspect=${realSuspect.length})`,
+    );
+  });
+
+  await withTmpDir('alice-rs-', async (dir) => {
+    // 窗口边界(表驱动):描述性词距 /raw 恰好 5 行 → 在窗内 → suspect;
+    // 6 行 → 超窗 → manual。间隔行无语义,只撑距离。
+    const cases = [
+      [5, 'manual-suspect'],
+      [6, 'manual'],
+    ] as const;
+    for (const [gap, expected] of cases) {
+      const text = [
+        'rawSlicer.ts 的说明文字',
+        ...Array.from({ length: gap - 1 }, (_, i) => `间隔行 ${i + 1}`),
+        '/raw 目标段',
+      ].join('\n');
+      const r = await sliceAndPersist(dir, text, {
+        sessionId: `sess-b${gap}`,
+        now: FIXED_NOW,
+      });
+      const other = expected === 'manual' ? 'manual-suspect' : 'manual';
+      assert(
+        r.files.some((f) => f.kind === expected) &&
+          !r.files.some((f) => f.kind === other),
+        `描述性词距 /raw ${gap} 行 → ${expected}`,
+      );
+    }
   });
 
   // ── 总结 ──

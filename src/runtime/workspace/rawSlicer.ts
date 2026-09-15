@@ -15,6 +15,9 @@
  *   1) code     —— ```...``` 围栏块(含语言标注),保留原样
  *   2) decision —— 含决策关键词的行 / 句,整行入库(详见 DECISION_KEYWORDS)
  *   3) manual   —— `/raw` 字面量标记的一段,到下一个空行或下一个 `/raw`
+ *      └─ 降级:若触发器前 5 行内出现描述性词(见 MANUAL_SUSPECT_HINTS),
+ *         说明该 `/raw` 大概率是"描述 rawSlicer 自身规则"时残留的字面量
+ *         (issues/issue_01.md),段 kind 记为 manual-suspect 而非 manual。
  *
  * 路径:
  *  - 落盘目录:`projectRoot/.raw/`(由 P0 ensureMemoryWikiDirs 负责存在性)
@@ -48,8 +51,8 @@ export class RawSliceError extends Error {
   }
 }
 
-/** 三种切片类型 */
-export type RawSliceKind = 'code' | 'decision' | 'manual';
+/** 三种切片类型 + manual 的降级形态(issue_01) */
+export type RawSliceKind = 'code' | 'decision' | 'manual' | 'manual-suspect';
 
 /** 内部匹配结果(text 中的命中片段) */
 interface RawMatch {
@@ -197,31 +200,66 @@ const RAW_MARK_LEN = 4;
 /** 单行内的 `/raw` 行首匹配:行首可选空白 + /raw + 词边界 */
 const LINE_START_RAW = /^[ \t]*\/raw\b/;
 
+/**
+ * manual-suspect 上下文过滤(issues/issue_01.md)。
+ *
+ * 触发器"往前数 5 行"(在原文本里,不含触发行本身)若出现任一描述性词,
+ * 说明这个 line-start `/raw` 大概率是"描述 rawSlicer 自身规则"时嵌入的
+ * 字面量残留(如路线图 / 设计文档),而不是用户主动打点 —— 段 kind 降级为
+ * manual-suspect,是否采信交给下游消费方(P2 ingest 模板强制 [疑])。
+ *
+ * 词表只收 issue_01 实锤的三个词,保持高精度:
+ * 过滤器的职责是"标记嫌疑"而非"分类语义",词表越宽,真实打点被误降级的
+ * 风险越大(误伤 manual 信任度)。真正的语义审计归 verify() 管,不在此层。
+ *
+ * 窗口 5 行的理由:描述性文字与残留 `/raw` 在原文中相邻(issue_01 里
+ * `rawSlicer.ts` 距触发器仅 2 行);5 行足以覆盖"标题 + 一行说明"的
+ * 排版距离,又不会把整节文字都算作上下文。
+ */
+const MANUAL_SUSPECT_LOOKBACK_LINES = 5;
+const MANUAL_SUSPECT_HINTS: readonly string[] = [
+  'rawSlicer.ts',
+  '手动打点',
+  '规则切片器',
+];
+
+/** 触发器所在行往前 5 行内是否出现描述性词 */
+function isSuspectContext(lines: readonly string[], triggerLineIdx: number): boolean {
+  const from = Math.max(0, triggerLineIdx - MANUAL_SUSPECT_LOOKBACK_LINES);
+  for (let j = from; j < triggerLineIdx; j++) {
+    for (const hint of MANUAL_SUSPECT_HINTS) {
+      if (lines[j].includes(hint)) return true;
+    }
+  }
+  return false;
+}
+
 function matchManualSegments(text: string): RawMatch[] {
-  // 步骤 1:拆行,找所有 line-起始 /raw 的 markStart(text 中的字符偏移)
-  const lineMarks: number[] = [];
+  // 步骤 1:拆行,找所有 line-起始 /raw,记 {start: text 中字符偏移, lineIdx: 所在行号}
+  const marks: Array<{ start: number; lineIdx: number }> = [];
   const lines = text.split('\n');
   let pos = 0;
-  for (const line of lines) {
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
     const m = LINE_START_RAW.exec(line);
     if (m) {
       const indentLen = m[0].length - RAW_MARK_LEN;
-      lineMarks.push(pos + indentLen);
+      marks.push({ start: pos + indentLen, lineIdx: li });
     }
     pos += line.length + 1; // +1 for \n
   }
 
   // 步骤 2:按顺序切段
   const matches: RawMatch[] = [];
-  for (let i = 0; i < lineMarks.length; i++) {
-    const markStart = lineMarks[i];
+  for (let i = 0; i < marks.length; i++) {
+    const markStart = marks[i].start;
     const afterMark = markStart + RAW_MARK_LEN;
 
     // 默认段终点:下一个 /raw 所在行的"行首位置之前"(\n 之后的位置,即下一个 \n)。
     // 如果 i 是最后一个,段终点 = text.length。
     let segmentEnd: number;
-    if (i + 1 < lineMarks.length) {
-      segmentEnd = lineMarks[i + 1] - 1; // 减去 1:下一个 markStart 前的 \n
+    if (i + 1 < marks.length) {
+      segmentEnd = marks[i + 1].start - 1; // 减去 1:下一个 markStart 前的 \n
     } else {
       segmentEnd = text.length;
     }
@@ -238,7 +276,10 @@ function matchManualSegments(text: string): RawMatch[] {
 
     const content = slice.slice(0, endRel).replace(/\s+$/, '');
 
-    matches.push({ kind: 'manual', content });
+    const kind: RawSliceKind = isSuspectContext(lines, marks[i].lineIdx)
+      ? 'manual-suspect'
+      : 'manual';
+    matches.push({ kind, content });
   }
   return matches;
 }

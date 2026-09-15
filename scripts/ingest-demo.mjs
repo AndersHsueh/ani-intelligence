@@ -35,10 +35,10 @@ const result = await sliceAndPersist(process.cwd(), text, {
   tags: ['manual-ingest', '0915'],
 });
 
-// 汇总:按 kind 分组,每组列文件名
-const byKind = { code: [], decision: [], manual: [] };
+// 汇总:按 kind 分组,每组列文件名(kind 集合随 rawSlicer 演进,动态建组)
+const byKind = {};
 for (const f of result.files) {
-  byKind[f.kind].push(f.file);
+  (byKind[f.kind] ??= []).push(f.file);
 }
 
 console.log(`\n[ingest-demo] 共 ${result.files.length} 条切片(indexEntries=${result.indexEntries}):`);
