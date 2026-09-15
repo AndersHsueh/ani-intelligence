@@ -27,13 +27,19 @@
  */
 
 import fs from 'fs/promises';
-import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
 
 import {
   ensureMemoryWikiDirs,
+  MEMORY_WIKI_DIRS,
 } from './memoryWikiPaths.js';
+import {
+  resolveRoot,
+  assertInsideRoot,
+  isHome,
+  type ErrorCtor,
+} from './pathSafety.js';
 
 export class RawSliceError extends Error {
   constructor(message: string) {
@@ -50,8 +56,6 @@ interface RawMatch {
   kind: RawSliceKind;
   content: string;
   lang?: string;
-  startPos: number;
-  endPos: number;
 }
 
 /** 落盘结果 */
@@ -78,44 +82,23 @@ export interface SlicePersistResult {
   indexEntries: number;
 }
 
-// ── 路径与校验 ─────────────────────────────────────────────────────────
+// ── 路径与校验(用共享 pathSafety)───────────────────────────────────
 
-const RAW_DIRNAME = '.raw';
+const RAW_DIRNAME = MEMORY_WIKI_DIRS[0]; // '.raw' —— 单点真相来自 P0
 const INDEX_FILENAME = '.index.jsonl';
 const HASH_HEX_LEN = 8;
 
-/** 仿照 P0 assertInsideRoot:校验 target 在 root 之下 */
-function assertInsideRoot(root: string, target: string): void {
-  const rel = path.relative(root, target);
-  if (rel.length === 0) {
-    throw new RawSliceError(`refuse: target equals projectRoot`);
-  }
-  if (rel.startsWith('..') || path.isAbsolute(rel)) {
-    throw new RawSliceError(
-      `refuse: path escapes projectRoot: root=${root} target=${target}`,
-    );
-  }
-}
-
-function resolveRoot(projectRoot: string): string {
-  if (typeof projectRoot !== 'string' || projectRoot.length === 0) {
-    throw new RawSliceError('refuse: projectRoot is empty');
-  }
-  if (projectRoot.includes('\0')) {
-    throw new RawSliceError('refuse: projectRoot contains NUL byte');
-  }
-  return path.resolve(projectRoot);
-}
+const Err: ErrorCtor = RawSliceError;
 
 function rawDirPath(root: string): string {
   const target = path.join(root, RAW_DIRNAME);
-  assertInsideRoot(root, target);
+  assertInsideRoot(Err, root, target);
   return target;
 }
 
 function indexPath(root: string): string {
   const target = path.join(root, INDEX_FILENAME);
-  assertInsideRoot(root, target);
+  assertInsideRoot(Err, root, target);
   return target;
 }
 
@@ -155,22 +138,10 @@ const DECISION_KEYWORDS: readonly string[] = [
 function matchDecisionLines(text: string): RawMatch[] {
   const re = new RegExp(DECISION_KEYWORDS.join('|'));
   const matches: RawMatch[] = [];
-  // 用 split 保留每个换行位置
-  const lines = text.split('\n');
-  let pos = 0;
-  for (const line of lines) {
+  for (const line of text.split('\n')) {
     if (line.length > 0 && re.test(line)) {
-      matches.push({
-        kind: 'decision',
-        content: line,
-        startPos: pos,
-        endPos: pos + line.length,
-      });
+      matches.push({ kind: 'decision', content: line });
     }
-    // 行长度 + 1(\n)推进到下一行起点
-    pos += line.length + 1;
-    // 重置 lastIndex,避免 RegExp 对象在多次 test 间出错
-    re.lastIndex = 0;
   }
   return matches;
 }
@@ -193,14 +164,10 @@ function matchCodeBlocks(text: string): RawMatch[] {
   CODE_BLOCK_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = CODE_BLOCK_RE.exec(text)) !== null) {
-    const lang = m[1] || '';
-    const body = m[2];
     matches.push({
       kind: 'code',
-      content: body,             // 写盘用去围栏的 body;围栏在 lang 字段有语言标注
-      lang,
-      startPos: m.index,
-      endPos: m.index + m[0].length,
+      content: m[2],             // 写盘用去围栏的 body;语言标注保留在 lang
+      lang: m[1] || '',
     });
   }
   return matches;
@@ -271,12 +238,7 @@ function matchManualSegments(text: string): RawMatch[] {
 
     const content = slice.slice(0, endRel).replace(/\s+$/, '');
 
-    matches.push({
-      kind: 'manual',
-      content,
-      startPos: afterMark,
-      endPos: afterMark + endRel,
-    });
+    matches.push({ kind: 'manual', content });
   }
   return matches;
 }
@@ -442,8 +404,8 @@ export async function sliceAndPersist(
   text: string,
   opts: SlicePersistOptions,
 ): Promise<SlicePersistResult> {
-  const root = resolveRoot(projectRoot);
-  if (root === os.homedir()) {
+  const root = resolveRoot(Err, projectRoot);
+  if (isHome(root)) {
     throw new RawSliceError(`refuse: projectRoot equals HOME (${root})`);
   }
 
@@ -457,49 +419,47 @@ export async function sliceAndPersist(
   const rawDir = rawDirPath(root);
   const idxPath = indexPath(root);
 
-  // 确保 .index.jsonl 存在(若不存在,创建空文件;后续追加不会失败)
+  // 确保 .index.jsonl 存在 —— `wx` 已经编码"exists vs create"语义,不需预 fs.access
+  // (fs.access + fs.open 是 TOCTOU + 重复 syscall)
   try {
-    await fs.access(idxPath);
+    const fh = await fs.open(idxPath, 'wx', 0o600);
+    await fh.close();
   } catch (e) {
     const err = e as NodeJS.ErrnoException;
-    if (err?.code === 'ENOENT') {
-      // 'wx' 独占创建,避免覆盖(理论上不会,因为上面 ENOENT 已确认)
-      const fh = await fs.open(idxPath, 'wx', 0o600);
-      await fh.close();
-    } else {
-      throw e;
-    }
+    if (err?.code !== 'EEXIST') throw e;
+    // EEXIST = 已存在,正常,继续
   }
 
   const matches = matchAll(text);
-  const files: RawSliceFile[] = [];
   const now = opts.now ?? new Date();
   const atISO = now.toISOString();
   const tags = opts.tags ?? [];
 
-  for (const m of matches) {
-    const baseName = baseFilename(now, m.content);
-    const body = buildFileBody({
+  // 步骤 1:准备所有 match 的写入计划(无 I/O)
+  const plans = matches.map((m) => ({
+    match: m,
+    baseName: baseFilename(now, m.content),
+    body: buildFileBody({
       kind: m.kind,
       sessionId: opts.sessionId,
       at: atISO,
       tags,
       content: m.content,
-    });
-    const { filename, absPath } = await allocateAndWrite(rawDir, baseName, body);
-    const file: RawSliceFile = {
-      kind: m.kind,
-      file: filename,
-      absPath,
-      at: atISO,
-    };
-    files.push(file);
+    }),
+  }));
 
-    // 同步追加一行 .index.jsonl(每个文件一行,append-only)
-    await fs.writeFile(idxPath, buildIndexLine(file) + '\n', {
-      flag: 'a',
-      encoding: 'utf-8',
-    });
+  // 步骤 2:并行写所有 .raw 文件,收集成功的 entries(失败抛错冒泡)
+  const files: RawSliceFile[] = await Promise.all(
+    plans.map(async (p): Promise<RawSliceFile> => {
+      const { filename, absPath } = await allocateAndWrite(rawDir, p.baseName, p.body);
+      return { kind: p.match.kind, file: filename, absPath, at: atISO };
+    }),
+  );
+
+  // 步骤 3:一次性 batch 写 index(append-only,只包含成功写入的)
+  if (files.length > 0) {
+    const lines = files.map(buildIndexLine).join('\n') + '\n';
+    await fs.writeFile(idxPath, lines, { flag: 'a', encoding: 'utf-8' });
   }
 
   return { files, indexEntries: files.length };

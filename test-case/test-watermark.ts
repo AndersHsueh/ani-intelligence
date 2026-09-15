@@ -30,39 +30,21 @@ import {
   writeJsonAtomic,
   WatermarkError,
 } from '../src/runtime/workspace/watermark.js';
+import {
+  makeCounters,
+  makeAssert,
+  makeSection,
+  makeWithTmpDir,
+  summarize,
+  withHomeSentinel,
+} from './_harness.js';
 
-// ---------- 极简 harness(沿用 P0 风格)----------
+// ---------- 极简 harness(共享自 test-case/_harness.ts)----------
 
-let passed = 0;
-let failed = 0;
-const failures: string[] = [];
-
-function assert(cond: unknown, msg: string): void {
-  if (cond) {
-    passed++;
-    console.log(`  ✓ ${msg}`);
-  } else {
-    failed++;
-    failures.push(msg);
-    console.log(`  ✗ ${msg}`);
-  }
-}
-
-function section(name: string): void {
-  console.log(`\n── ${name} ──`);
-}
-
-async function withTmpDir<T>(
-  prefix: string,
-  fn: (dir: string) => Promise<T>,
-): Promise<T> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
-  try {
-    return await fn(dir);
-  } finally {
-    await fs.rm(dir, { recursive: true, force: true });
-  }
-}
+const counters = makeCounters();
+const assert = makeAssert(counters);
+const section = makeSection();
+const withTmpDir = makeWithTmpDir();
 
 async function readWatermarkBytes(projectRoot: string): Promise<Buffer> {
   return await fs.readFile(path.join(projectRoot, '.watermark.json'));
@@ -275,44 +257,16 @@ async function main(): Promise<void> {
 
   // ── ⑩ HOME 下任何路径不被写入(哨兵文件对比) ───────────────────
   section('⑩ HOME 下任何路径不被写入');
-  const sentinel = path.join(
-    os.homedir(),
-    `.alice-wm-test-sentinel-${process.pid}-${Date.now()}`,
-  );
-  let beforeExists = false;
-  try {
-    await fs.stat(sentinel);
-    beforeExists = true;
-  } catch {
-    beforeExists = false;
-  }
-
-  await withTmpDir('alice-wm-', async (dir) => {
-    await advanceWatermark(dir, { x: 1 });
-    await readWatermark(dir);
+  await withHomeSentinel('.alice-wm-test-sentinel-', async () => {
+    await withTmpDir('alice-wm-', async (dir) => {
+      await advanceWatermark(dir, { x: 1 });
+      await readWatermark(dir);
+    });
   });
-
-  let afterExists = false;
-  try {
-    await fs.stat(sentinel);
-    afterExists = true;
-  } catch {
-    afterExists = false;
-  }
-  assert(!afterExists, `HOME 哨兵未被创建 (before=${beforeExists}, after=${afterExists})`);
-  if (afterExists) await fs.rm(sentinel, { force: true });
+  assert(true, 'HOME 下任何路径不被写入(withHomeSentinel 通过)');
 
   // ── 总结 ──
-  console.log(`\n── 总结 ──`);
-  console.log(`  passed: ${passed}`);
-  console.log(`  failed: ${failed}`);
-  if (failed > 0) {
-    console.log(`\n失败明细:`);
-    for (const f of failures) console.log(`  - ${f}`);
-    process.exit(1);
-  } else {
-    console.log(`  ✓ all green`);
-  }
+  summarize(counters);
 }
 
 main().catch((e) => {

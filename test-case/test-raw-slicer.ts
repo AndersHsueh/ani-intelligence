@@ -13,7 +13,6 @@
  */
 
 import fs from 'fs/promises';
-import fsSync from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -22,40 +21,20 @@ import {
   RawSliceError,
   type RawSliceFile,
 } from '../src/runtime/workspace/rawSlicer.js';
-import { MemoryWikiPathError } from '../src/runtime/workspace/memoryWikiPaths.js';
+import {
+  makeCounters,
+  makeAssert,
+  makeSection,
+  makeWithTmpDir,
+  summarize,
+} from './_harness.js';
 
-// ---------- 极简 harness(沿用 P0 风格)----------
+// ---------- 极简 harness(共享自 test-case/_harness.ts)----------
 
-let passed = 0;
-let failed = 0;
-const failures: string[] = [];
-
-function assert(cond: unknown, msg: string): void {
-  if (cond) {
-    passed++;
-    console.log(`  ✓ ${msg}`);
-  } else {
-    failed++;
-    failures.push(msg);
-    console.log(`  ✗ ${msg}`);
-  }
-}
-
-function section(name: string): void {
-  console.log(`\n── ${name} ──`);
-}
-
-async function withTmpDir<T>(
-  prefix: string,
-  fn: (dir: string) => Promise<T>,
-): Promise<T> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
-  try {
-    return await fn(dir);
-  } finally {
-    await fs.rm(dir, { recursive: true, force: true });
-  }
-}
+const counters = makeCounters();
+const assert = makeAssert(counters);
+const section = makeSection();
+const withTmpDir = makeWithTmpDir();
 
 // 锁定"现在"以保证 HHMM 可预测
 const FIXED_NOW = new Date('2026-09-15T10:30:00.000Z');
@@ -493,16 +472,7 @@ async function main(): Promise<void> {
   });
 
   // ── 总结 ──
-  console.log(`\n── 总结 ──`);
-  console.log(`  passed: ${passed}`);
-  console.log(`  failed: ${failed}`);
-  if (failed > 0) {
-    console.log(`\n失败明细:`);
-    for (const f of failures) console.log(`  - ${f}`);
-    process.exit(1);
-  } else {
-    console.log(`  ✓ all green`);
-  }
+  summarize(counters);
 }
 
 main().catch((e) => {

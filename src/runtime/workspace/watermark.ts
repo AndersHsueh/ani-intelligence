@@ -23,9 +23,15 @@
  */
 
 import fs from 'fs/promises';
-import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
+
+import {
+  resolveRoot,
+  assertInsideRoot,
+  isHome,
+  type ErrorCtor,
+} from './pathSafety.js';
 
 /** 水位线文件名(相对 projectRoot) */
 const WATERMARK_FILENAME = '.watermark.json';
@@ -40,47 +46,17 @@ export class WatermarkError extends Error {
   }
 }
 
+const Err: ErrorCtor = WatermarkError;
+
 /**
  * 水位线状态:任意可 JSON 序列化的对象。
  * 调用方负责 schema 定义;本模块不约束字段。
  */
 export type WatermarkState = Record<string, unknown>;
 
-/**
- * 解析 projectRoot 并做输入校验。
- *  - 必须是非空字符串
- *  - 拒绝 NUL 字节(规避路径注入)
- *  - 解析为绝对路径
- */
-function resolveRoot(projectRoot: string): string {
-  if (typeof projectRoot !== 'string' || projectRoot.length === 0) {
-    throw new WatermarkError('refuse: projectRoot is empty');
-  }
-  if (projectRoot.includes('\0')) {
-    throw new WatermarkError('refuse: projectRoot contains NUL byte');
-  }
-  return path.resolve(projectRoot);
-}
-
-/**
- * 校验目标路径在解析后仍位于 root 之下。
- * 任何 ../ 跳出或绝对路径都拒绝。沿用 P0 同名思路(未引用 P0 私有函数)。
- */
-function assertInsideRoot(root: string, target: string): void {
-  const rel = path.relative(root, target);
-  if (rel.length === 0) {
-    throw new WatermarkError(`refuse: target equals projectRoot`);
-  }
-  if (rel.startsWith('..') || path.isAbsolute(rel)) {
-    throw new WatermarkError(
-      `refuse: path escapes projectRoot: root=${root} target=${target}`,
-    );
-  }
-}
-
 function watermarkPath(root: string): string {
   const target = path.join(root, WATERMARK_FILENAME);
-  assertInsideRoot(root, target);
+  assertInsideRoot(Err, root, target);
   return target;
 }
 
@@ -94,8 +70,8 @@ function watermarkPath(root: string): string {
 export async function readWatermark(
   projectRoot: string,
 ): Promise<WatermarkState | null> {
-  const root = resolveRoot(projectRoot);
-  if (root === os.homedir()) {
+  const root = resolveRoot(Err, projectRoot);
+  if (isHome(root)) {
     throw new WatermarkError(`refuse: projectRoot equals HOME (${root})`);
   }
   const p = watermarkPath(root);
@@ -147,17 +123,22 @@ export async function writeJsonAtomic(
   const tmpName = `${base}.tmp-${crypto.randomBytes(TMP_HEX_LEN / 2).toString('hex')}`;
   const tmpPath = path.join(dir, tmpName);
 
-  let fh: import('fs/promises').FileHandle | null = null;
+  // 嵌套 try/finally:
+  //   内层 finally:任何时候都 close 句柄(即使 rename 失败, tmp 也已关闭)
+  //   外层 catch:open / write / sync 失败时清理 tmp, 抛错
+  let fh: import('fs/promises').FileHandle;
   try {
-    fh = await fs.open(tmpPath, 'wx', 0o600);
-    await fh.writeFile(body, 'utf-8');
-    await fh.sync();
+    try {
+      fh = await fs.open(tmpPath, 'wx', 0o600);
+      await fh.writeFile(body, 'utf-8');
+      await fh.sync();
+    } finally {
+      await fh.close();
+    }
   } catch (e) {
-    if (fh) await fh.close().catch(() => {});
     await fs.rm(tmpPath, { force: true });
     throw e;
   }
-  await fh.close();
 
   try {
     await fs.rename(tmpPath, targetFile);
@@ -183,8 +164,8 @@ export async function advanceWatermark(
   projectRoot: string,
   next: WatermarkState,
 ): Promise<WatermarkState> {
-  const root = resolveRoot(projectRoot);
-  if (root === os.homedir()) {
+  const root = resolveRoot(Err, projectRoot);
+  if (isHome(root)) {
     throw new WatermarkError(`refuse: projectRoot equals HOME (${root})`);
   }
   const p = watermarkPath(root);
