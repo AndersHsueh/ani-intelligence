@@ -73,3 +73,7 @@ QWEN.md
 GEMINI.md
 *.pen
 *.secret
+# alice-code memory wiki (auto-added, idempotent)
+.raw/
+.wiki/
+.outputs/
