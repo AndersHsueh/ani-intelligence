@@ -1,7 +1,7 @@
 # Issue #01: rawSlicer manual 规则被 HTML 残留 `/raw` 字面量误命中
 
 > 发现时间: 2026-09-15
-> 状态: **待评估**(暂不修代码,等明天三级标记 + verify() 时一起考虑)
+> 状态: **已关闭**(2026-09-16,commit `9c3a60d` 修复,`fdfaf7f`/`a0f8c15` 承接三级标记与审计原语;已 fast-forward main)
 > 来源: P2 首次手工 ingest 实验(`0915` 路线图切片 → `.wiki/工作记忆层落地.md`)
 > 发现者: M3(实验中识别;作为 KARPATHY 编译者在 wiki 的"来源"章节如实标注了 manual 段为 rawSlicer 误用)
 
@@ -61,3 +61,10 @@ ls .raw/
 - `.wiki/工作记忆层落地.md` 来源章节 + 自核对章节:本次误触发被如实承认
 - P2 ingest 模板(明天):应包含 `[源]/[推]/[疑]` 前缀字段 + `verify()` 审计函数
 - 路线图:`outputs/0915-sword-comeback-record.html` § 三级标记 + 独立审计函数段
+
+## 关闭记录(2026-09-16)
+
+- **修复**:`9c3a60d fix(memory-wiki): P2-A 修 issue_01 —— manual-suspect 降级`。`matchManualSegments` 加上下文过滤,触发器前 5 行(原文本)出现 `rawSlicer.ts` / `手动打点` / `规则切片器` 任一描述性词 → 段 kind 降级为 `manual-suspect`(第 45–49 行的初步设想按字面落地,未加第 4 个自指词)。
+- **承接**:`fdfaf7f`(verify() + ingestTemplate.ts 三级标记,`manual-suspect` 强制 `[疑]`)、`a0f8c15`(审计模型选型声明 + flip-rate 统计,config-only 未接线)—— 本 issue 提出的"下游消费方决定 manual-suspect 是否等同 manual"由 ingestTemplate 给出确定性答案:强制 `[疑]`。
+- **验证**:issue_01 原始场景等价复现(`test-raw-slicer.ts` § ⑭)+ 真实 `/tmp/0915-plain.txt` 端到端 ingest-demo 复现,hash `89011f6d` 与本 issue 记录一致,现在标记为 `manual-suspect`。6 套件 172 断言全绿,`/simplify` 已跑。
+- **状态**:已 fast-forward 进 `main`(`fe053ab..a0f8c15`),已推送 `github` 远程;`gitee` 远程由 Anders 手工同步。
